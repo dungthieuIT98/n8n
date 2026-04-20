@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Exam Grading - Tra cuu sinh vien</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body data-page="student" class="bootstrap-shell">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1><a href="index.html">AI Exam Grading</a></h1>
+        <p>Project UI tach file theo spec 01, 02, 03, 04.</p>
+      </div>
+      <div><small id="current-user-label">Chua dang nhap</small></div>
+      <nav class="nav" id="nav"></nav>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <div>
+          <h2>Tra cuu ket qua cho sinh vien</h2>
+          <p>Sinh vien tim ket qua da cong bo bang student_code, ho ten va class_code.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="panel">
+          <form id="student-search-form">
+            <div class="grid-3">
+              <label>
+                student_code
+                <input type="text" name="student_code" placeholder="SV2026001">
+              </label>
+              <label>
+                Ho ten
+                <input type="text" name="student_name" placeholder="Nguyen Minh An">
+              </label>
+              <label>
+                class_code
+                <input type="text" name="class_code" placeholder="12A1">
+              </label>
+            </div>
+            <div class="button-row" style="margin-top: 16px;">
+              <button type="submit">Tra cuu</button>
+              <button type="button" class="secondary" id="student-fill-demo-btn">Dien du lieu mau</button>
+            </div>
+          </form>
+
+          <div class="table-wrapper" style="margin-top: 16px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ten bai thi</th>
+                  <th>Mon hoc</th>
+                  <th>Loai bai thi</th>
+                  <th>Diem tong</th>
+                  <th>Trang thai cong bo</th>
+                  <th>Thoi gian cham</th>
+                  <th>Hanh dong</th>
+                </tr>
+              </thead>
+              <tbody id="student-table-body">
+                <tr><td colspan="7">Nhap thong tin de bat dau tra cuu.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Detail Modal -->
+      <div class="modal" id="student-detail-modal">
+        <div class="modal-overlay" id="student-modal-overlay"></div>
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3 id="student-modal-title">Chi tiet bai thi</h3>
+            <button class="modal-close" data-close-modal="student-detail-modal" id="student-modal-close">&times;</button>
+          </div>
+          <div class="modal-body" id="student-detail-content">
+            <p>Dang tai...</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app-state.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/student.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>

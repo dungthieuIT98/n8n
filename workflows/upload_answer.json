@@ -1,0 +1,1003 @@
+{
+  "name": "upload_answer",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mistralCloudApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "purpose",
+              "value": "ocr"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9578afd6-7172-4a51-8517-a91f2883c55b",
+      "name": "Mistral Upload",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1504,
+        400
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "4j22PGH28ejToB5f",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.mistral.ai/v1/files/{{ $json.id }}/url",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mistralCloudApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "expiry",
+              "value": "24"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "82fce7a1-044d-4690-bb5a-bedd7b4c6760",
+      "name": "Mistral Signed URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1712,
+        400
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "4j22PGH28ejToB5f",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/ocr",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mistralCloudApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"mistral-ocr-latest\",\n  \"document\": {\n    \"type\": \"document_url\",\n    \"document_url\": \"{{ $json.url }}\"\n  },\n  \"include_image_base64\": true\n}",
+        "options": {}
+      },
+      "id": "b1de2911-d682-493a-bb54-cca31fabbeec",
+      "name": "Mistral DOC OCR",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1904,
+        400
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "4j22PGH28ejToB5f",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5332d2cb-0469-4579-b112-aaa7470acc57",
+              "name": "markdown",
+              "value": "={{ ($json.pages || []).map(page => page.markdown || '').join('\\n\\n').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2112,
+        400
+      ],
+      "id": "9ac3a56b-3794-4b6b-a8e9-ace1bb6b2848",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Bạn là AI trích xuất bài làm học sinh từ OCR markdown.\n\nMục tiêu:\nChuyển toàn bộ nội dung bài làm của học sinh thành JSON CHUAN de luu database.\n\nQuy tắc bắt buộc:\n1. Trả về DUY NHẤT một JSON array hợp lệ, không có mô tả, không có markdown code block.\n2. Mỗi phần tử là 1 câu trả lời với format:\n   {\n     \"question_no\": string,\n     \"answer_text\": string,\n     \"detected_score\": number|null,\n     \"confidence\": number\n   }\n3. question_no: lấy số/thứ tự câu (ví dụ: \"1\", \"2a\", \"III\"). Nếu không xác định được thì dùng \"unknown\".\n4. answer_text: giữ nguyên nội dung trả lời của học sinh, chỉ chuẩn hóa khoảng trắng dư và xuống dòng lặp.\n5. detected_score: nếu thấy điểm giáo viên ghi trực tiếp trong bài (ví dụ 1.5/2, 8 điểm) thì trích số; nếu không có thì để null.\n6. confidence: số thực từ 0 đến 1 theo độ chắc chắn khi tách câu trả lời.\n7. Không tự chấm điểm, không thêm rubric, không thêm nhận xét.\n8. Nếu bài làm không đọc được nội dung thì trả về []\n\nInput OCR markdown:\n{{ $json.markdown }}\n\nOutput ví dụ:\n[\n  {\n    \"question_no\": \"1\",\n    \"answer_text\": \"...\",\n    \"detected_score\": null,\n    \"confidence\": 0.92\n  }\n]"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        2320,
+        400
+      ],
+      "id": "0d440b67-94f3-4873-9429-d192bed7c212",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "TDDvQeXhNqsO4nRg",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bfa03bec-ae48-41f8-a8f8-bffa8271cd76",
+              "name": "text",
+              "value": "={{ $json.output[0].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2672,
+        400
+      ],
+      "id": "93ff5052-d75b-4823-a97c-206e28f3b083",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "upload-answer-api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        464,
+        640
+      ],
+      "id": "a2646983-76f8-4ffa-bf5c-09ad886e1087",
+      "name": "On API submission",
+      "webhookId": "upload-answer-api",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst binary = item.binary || {};\n\nif (!binary.submission_file && binary.file) {\n  binary.submission_file = binary.file;\n}\n\nconst uploadFile = binary.submission_file;\nif (!uploadFile) {\n  throw new Error('Thieu file. Gui multipart/form-data voi field file la submission_file (hoac file).');\n}\n\nconst filename = String(uploadFile.fileName || uploadFile.filename || '').toLowerCase();\nconst mimeType = String(uploadFile.mimeType || uploadFile.mimetype || '').toLowerCase();\nconst isPdf = filename.endsWith('.pdf') || mimeType === 'application/pdf';\n\nif (!isPdf) {\n  throw new Error('Chi ho tro file PDF cho workflow upload_answer');\n}\n\nreturn [{ json: item.json, binary }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        640
+      ],
+      "id": "7bbabfe5-470e-473c-ab7c-7b11be36c026",
+      "name": "Validate PDF file"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5495157c-8887-4a33-8533-d9218ed6435e",
+              "name": "name",
+              "value": "={{ $json.body.student_name }}",
+              "type": "string"
+            },
+            {
+              "id": "341ea077-c943-4b56-bff7-a14505e0c39d",
+              "name": "subject_code",
+              "value": "={{ $json.body.subject_code }}",
+              "type": "string"
+            },
+            {
+              "id": "362d9c99-49a4-4a52-8bc9-299677d969e3",
+              "name": "Đề thi",
+              "value": "={{ $json.body.exam_title }}",
+              "type": "string"
+            },
+            {
+              "id": "6220ac7a-9e58-4f98-83b6-186141bebd0c",
+              "name": "File bài làm",
+              "value": "={{ $('Validate PDF file').item.binary?.submission_file?.fileName || $('Validate PDF file').item.binary?.submission_file?.filename || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "db64ea34-b713-46ac-93c9-7616049ee8c0",
+              "name": "submittedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "7cd24314-2d02-4f5c-b0ec-07a8accbf876",
+              "name": "Mã sinh viên",
+              "value": "={{ $json.body.student_code }}",
+              "type": "string"
+            },
+            {
+              "id": "9f674ae0-1f15-4f6d-9f01-0f68c0ce69ef",
+              "name": "notes",
+              "value": "={{ $json.body.notes }}",
+              "type": "string"
+            },
+            {
+              "id": "33e4af66-1381-44fd-a2e0-8e50c4dbad9c",
+              "name": "class_code",
+              "value": "={{ $json.body.class_code }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        688,
+        1024
+      ],
+      "id": "817df778-47d7-499e-8639-dee4480c07de",
+      "name": "Edit Fields2",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "submission_file",
+        "name": "={{ $binary.submission_file.fileName || 'submission.pdf' }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1wOZ8pKLYH-mzXpKavQsH8Y7HuMGjkECP",
+          "mode": "list",
+          "cachedResultName": "n8n",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1wOZ8pKLYH-mzXpKavQsH8Y7HuMGjkECP"
+        },
+        "options": {
+          "ocrLanguage": "vi"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        608
+      ],
+      "id": "e76fb731-8844-4dea-8427-d0219db7a621",
+      "name": "Upload file",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "qSShY0ojWV7cDYxm",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "4a216fec-e87a-4e6e-aef4-b8b72ca88f47",
+      "name": "Import PDF",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        1296,
+        416
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "qSShY0ojWV7cDYxm",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const extract = $('exam_detail').first()?.json?.extract_json;\nconst submission = $('add asignment').first()?.json;\nconst formData = $('Edit Fields2').first()?.json || {};\n\nif (!submission?.id) {\n  throw new Error('Khong tim thay submission id de cap nhat OCR result');\n}\n\nconst submissionId = Number(submission.id);\nconst examId = Number(submission.exam_id || 0);\nconst studentCode = String(formData['Mã sinh viên'] || '').replace(/'/g, \"''\");\nconst studentName = String(formData.name || '').replace(/'/g, \"''\");\nconst classCode = String(formData.subject_code || '').replace(/'/g, \"''\");\nconst payload = JSON.stringify({ extract_json: extract || [] }).replace(/'/g, \"''\");\n\nconst sql = `\nUPDATE submissions\nSET\n  status = 'extracted',\n  updated_at = NOW()\nWHERE id = ${submissionId};\n\nINSERT INTO system_logs (\n  log_type,\n  ref_table,\n  ref_id,\n  exam_id,\n  submission_id,\n  student_code,\n  student_name,\n  class_code,\n  workflow_execution_id,\n  model_name,\n  status,\n  message,\n  response_payload,\n  created_at\n) VALUES (\n  'submission_extract',\n  'submissions',\n  ${submissionId},\n  ${examId},\n  ${submissionId},\n  NULLIF('${studentCode}', ''),\n  NULLIF('${studentName}', ''),\n  NULLIF('${classCode}', ''),\n  '{{ $execution.id }}',\n  'mistral-ocr-latest + gpt-4.1-mini',\n  'success',\n  'OCR va trich xuat JSON thanh cong',\n  '${payload}'::jsonb,\n  NOW()\n);`;\n\nreturn [{ json: { id: submissionId, sql } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        992
+      ],
+      "id": "4838cb97-7a8f-4df9-9165-e9da4be49380",
+      "name": "Code in JavaScript1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const textData = $input.first().json.text || '[]';\nconst extractJson = JSON.parse(textData);\n\nreturn [\n  {\n    json: {\n      extract_json: extractJson\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2928,
+        448
+      ],
+      "id": "5abd6203-1c8f-4c21-940e-32e954df41cc",
+      "name": "exam_detail"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "22560f41-2c33-46a7-81b7-d127f27376e9",
+              "name": "id",
+              "value": "={{ $('Code in JavaScript1').item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2976,
+        944
+      ],
+      "id": "2edc3a16-a518-4413-b25c-d28f4d4b06de",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1xUS5MQzZygPPJ0VT0meaEIILSe5PdMir0syofwVH9Mo",
+          "mode": "list",
+          "cachedResultName": "n8n_exam",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xUS5MQzZygPPJ0VT0meaEIILSe5PdMir0syofwVH9Mo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Trang tính1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xUS5MQzZygPPJ0VT0meaEIILSe5PdMir0syofwVH9Mo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "stt": "={{ $json.id }}",
+            "thêm thành công": "true"
+          },
+          "matchingColumns": [
+            "stt"
+          ],
+          "schema": [
+            {
+              "id": "stt",
+              "displayName": "stt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Tên",
+              "displayName": "Tên",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "File",
+              "displayName": "File",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Trạng thái",
+              "displayName": "Trạng thái",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "thêm thành công",
+              "displayName": "thêm thành công",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3184,
+        944
+      ],
+      "id": "6009a943-2ec6-48ef-8198-739ed461e0f8",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NGgUPDxSQt3JEEaF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.sql }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2736,
+        928
+      ],
+      "id": "1317d3d6-de19-428c-be22-99a2b8192667",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d0add232-c484-41d3-b3ab-97a3de4e8bdc",
+              "name": "sql",
+              "value": "={{ $json.sql }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2544,
+        928
+      ],
+      "id": "e292c069-8866-42fe-b7ae-9c06a85d09b3",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, class_code, subject_code, status\nFROM exams\nWHERE class_code = '{{ ($('Edit Fields2').item.json.class_code || '').replace(/'/g, \"''\") }}'\n  AND '{{ ($('Edit Fields2').item.json.class_code || '').replace(/'/g, \"''\") }}' <> ''\n  AND (subject_code = '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}' OR '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}' = '')\n  AND status = 'active'\nORDER BY updated_at DESC, created_at DESC\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        1264
+      ],
+      "id": "89de067d-78ac-4572-9da8-8f75790505c8",
+      "name": "Execute a SQL query1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const exam = $input.first()?.json || {};\n\nif (!exam.id) {\n  throw new Error('Khong tim thay exam active phu hop voi de thi va lop da gui');\n}\n\nif (String(exam.status || '').toLowerCase() !== 'active') {\n  throw new Error('Exam khong o trang thai active');\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        960
+      ],
+      "id": "8c1f4ba5-0aac-44fe-81fe-120a02849730",
+      "name": "Validate active exam"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst binary = $('Validate PDF file').item.binary || {};\nreturn [{ json: item.json, binary }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        416
+      ],
+      "id": "6a515d9d-1ecf-4236-952e-c159d4901acd",
+      "name": "Restore binary"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH upsert_submission AS (\n  -- Thử UPDATE trước nếu submission đã tồn tại (cùng exam_id + student_code)\n  UPDATE submissions\n  SET\n    student_name = '{{ ($('Edit Fields2').item.json.name || '').replace(/'/g, \"''\") }}',\n    class_code = COALESCE(NULLIF('{{ ($('Validate active exam').item.json.class_code || '').replace(/'/g, \"''\") }}', ''), '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}'),\n    subject_code = '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}',\n    submission_file_path = '{{ ($('Upload file').item.json.webViewLink || $('Upload file').item.json.id || '').replace(/'/g, \"''\") }}',\n    submitted_at = NOW(),\n    source_type = 'web',\n    status = 'extracting',\n    notes = '{{ ($('Edit Fields2').item.json.notes || '').replace(/'/g, \"''\") }}',\n    updated_at = NOW()\n  WHERE exam_id = {{ $('Validate active exam').item.json.id }}\n    AND student_code = '{{ ($('Edit Fields2').item.json['Mã sinh viên'] || '').replace(/'/g, \"''\") }}'\n  RETURNING id, exam_id\n),\ninsert_submission AS (\n  -- Nếu UPDATE không match → INSERT bản ghi mới (chỉ khi KHÔNG tồn tại trong upsert_submission)\n  INSERT INTO submissions (\n    exam_id,\n    student_code,\n    student_name,\n    class_code,\n    subject_code,\n    submission_file_path,\n    submitted_at,\n    source_type,\n    status,\n    notes,\n    created_at,\n    updated_at\n  )\n  SELECT\n    {{ $('Validate active exam').item.json.id }},\n    '{{ ($('Edit Fields2').item.json['Mã sinh viên'] || '').replace(/'/g, \"''\") }}',\n    '{{ ($('Edit Fields2').item.json.name || '').replace(/'/g, \"''\") }}',\n    COALESCE(NULLIF('{{ ($('Validate active exam').item.json.class_code || '').replace(/'/g, \"''\") }}', ''), '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}'),\n    '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}',\n    '{{ ($('Upload file').item.json.webViewLink || $('Upload file').item.json.id || '').replace(/'/g, \"''\") }}',\n    NOW(),\n    'web',\n    'extracting',\n    '{{ ($('Edit Fields2').item.json.notes || '').replace(/'/g, \"''\") }}',\n    NOW(),\n    NOW()\n  WHERE NOT EXISTS (SELECT 1 FROM upsert_submission)\n  RETURNING id, exam_id\n)\n-- Trả về ID của submission (từ UPDATE hoặc INSERT)\nSELECT id, exam_id FROM upsert_submission\nUNION ALL\nSELECT id, exam_id FROM insert_submission\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1680,
+        864
+      ],
+      "id": "150844d3-79fe-40cb-a73b-d80c6f9ab3e0",
+      "name": "add asignment",
+      "alwaysOutputData": true,
+      "retryOnFail": false,
+      "executeOnce": false,
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2304,
+        784
+      ],
+      "id": "40d30599-ac9c-4515-88d1-a7f86f124a8b",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO system_logs (\n  log_type,\n  ref_table,\n  ref_id,\n  exam_id,\n  submission_id,\n  student_code,\n  student_name,\n  class_code,\n  workflow_execution_id,\n  model_name,\n  status,\n  message,\n  response_payload,\n  created_at\n) VALUES (\n  'data_merged',\n  'submissions',\n  {{ $('add asignment').item.json.id }},\n  {{ $('add asignment').item.json.exam_id }},\n  {{ $('add asignment').item.json.id }},\n  '{{ ($('Edit Fields2').item.json[\"Mã sinh viên\"] || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.name || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}',\n  '{{ $execution.id }}',\n  'mistral-ocr-latest + gpt-4.1-mini',\n  'success',\n  'Submission and extraction data merged - ready for final update',\n  jsonb_build_object('submission_id', {{ $('add asignment').item.json.id }}, 'exam_id', {{ $('add asignment').item.json.exam_id }}, 'answers_count', {{ ($('exam_detail').item.json.extract_json || []).length }}),\n  NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2288,
+        1152
+      ],
+      "id": "log-data-aggregated",
+      "name": "Log Data Merged",
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO system_logs (\n  log_type,\n  ref_table,\n  exam_id,\n  student_code,\n  student_name,\n  class_code,\n  workflow_execution_id,\n  status,\n  message,\n  response_payload,\n  created_at\n) VALUES (\n  'pdf_validation',\n  'submissions',\n  {{ $('Validate active exam').item.json.id }},\n  '{{ ($('Edit Fields2').item.json[\"Mã sinh viên\"] || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.name || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}',\n  '{{ $execution.id }}',\n  'success',\n  'PDF file validated successfully',\n  jsonb_build_object('exam_id', {{ $('Validate active exam').item.json.id }}, 'class_code', '{{ ($('Validate active exam').item.json.class_code || '').replace(/'/g, \"''\") }}'),\n  NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        160,
+        900
+      ],
+      "id": "log-pdf-validation",
+      "name": "Log PDF Validation",
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO system_logs (\n  log_type,\n  ref_table,\n  ref_id,\n  exam_id,\n  submission_id,\n  student_code,\n  student_name,\n  class_code,\n  workflow_execution_id,\n  status,\n  message,\n  response_payload,\n  created_at\n) VALUES (\n  'submission_created',\n  'submissions',\n  {{ $json.id }},\n  {{ $json.exam_id }},\n  {{ $json.id }},\n  '{{ ($('Edit Fields2').item.json[\"Mã sinh viên\"] || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.name || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}',\n  '{{ $execution.id }}',\n  'success',\n  'Submission record created/updated',\n  jsonb_build_object('submission_id', {{ $json.id }}, 'exam_id', {{ $json.exam_id }}, 'file_path', '{{ ($('Upload file').item.json.webViewLink || $('Upload file').item.json.id || '').replace(/'/g, \"''\") }}'),\n  NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        368,
+        900
+      ],
+      "id": "log-submission-created",
+      "name": "Log Submission Created",
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO system_logs (\n  log_type,\n  ref_table,\n  student_code,\n  student_name,\n  class_code,\n  workflow_execution_id,\n  model_name,\n  status,\n  message,\n  response_payload,\n  created_at\n) VALUES (\n  'ocr_started',\n  'submissions',\n  '{{ ($('Edit Fields2').item.json[\"Mã sinh viên\"] || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.name || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}',\n  '{{ $execution.id }}',\n  'mistral-ocr-latest',\n  'processing',\n  'OCR processing started - file uploaded to Mistral',\n  jsonb_build_object('mistral_file_id', '{{ $json.id }}'),\n  NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1504,
+        560
+      ],
+      "id": "log-ocr-started",
+      "name": "Log OCR Started",
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO system_logs (\n  log_type,\n  ref_table,\n  student_code,\n  student_name,\n  class_code,\n  workflow_execution_id,\n  model_name,\n  status,\n  message,\n  response_payload,\n  created_at\n) VALUES (\n  'extraction_completed',\n  'submissions',\n  '{{ ($('Edit Fields2').item.json[\"Mã sinh viên\"] || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.name || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Edit Fields2').item.json.subject_code || '').replace(/'/g, \"''\") }}',\n  '{{ $execution.id }}',\n  'gpt-4.1-mini',\n  'success',\n  'Answer extraction completed - {{ ($json.extract_json || []).length }} answers extracted',\n  '{{ JSON.stringify({ extract_json: $json.extract_json || [] }).replace(/'/g, \"''\") }}'::jsonb,\n  NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2928,
+        608
+      ],
+      "id": "log-extraction-completed",
+      "name": "Log Extraction Completed",
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Mistral Upload": {
+      "main": [
+        [
+          {
+            "node": "Mistral Signed URL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log OCR Started",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Signed URL": {
+      "main": [
+        [
+          {
+            "node": "Mistral DOC OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral DOC OCR": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On API submission": {
+      "main": [
+        [
+          {
+            "node": "Validate PDF file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate PDF file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Import PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Import PDF": {
+      "main": [
+        [
+          {
+            "node": "Mistral Upload",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "add asignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "exam_detail": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Extraction Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "Validate active exam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate active exam": {
+      "main": [
+        [
+          {
+            "node": "Restore binary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log PDF Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore binary": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add asignment": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Log Submission Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "exam_detail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Data Merged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "525cd2e4-9b5c-487c-b109-0940501b3f24",
+  "meta": {
+    "instanceId": "8120a54d1a3549819c2312ef6fd3824d752b9ddef79c687fc69a09152bfe9d23"
+  },
+  "id": "33Gz1ni6vQlwrCXL",
+  "tags": []
+}
