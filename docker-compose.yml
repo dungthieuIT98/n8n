@@ -11,7 +11,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - ../postgres-docker/init:/docker-entrypoint-initdb.d:ro
+      - ./postgres-docker/init:/docker-entrypoint-initdb.d:ro
       - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U n8n -d n8n"]
@@ -31,7 +31,7 @@ services:
     ports:
       - "5544:5432"
     volumes:
-      - ../postgres-docker/init:/docker-entrypoint-initdb.d:ro
+      - ./postgres-docker/init:/docker-entrypoint-initdb.d:ro
       - app_postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d app"]
