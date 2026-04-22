@@ -11,97 +11,128 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
-<body data-page="submission" class="bootstrap-shell">
+<body data-page="submission" class="bootstrap-shell submission-bootstrap-page">
   <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
+    <aside class="sidebar student-sidebar">
+      <div class="brand student-brand">
+        <span class="eyebrow student-brand-tag">Student portal</span>
         <h1><a href="index.html">AI Exam Grading</a></h1>
-        <p>Project UI tach file theo spec 01, 02, 03, 04.</p>
+        <p>Cong nop bai lam va tra cuu ket qua cho sinh vien. Chon dung bai thi, nop 1 file PDF va theo doi xu ly.</p>
       </div>
-      <div><small id="current-user-label">Chua dang nhap</small></div>
+      <div class="student-sidebar-meta">
+        <small id="current-user-label">Cong nop bai sinh vien</small>
+      </div>
       <nav class="nav" id="nav"></nav>
     </aside>
 
     <main class="main">
       <section class="hero workspace-hero">
-        <div>
-          <span class="eyebrow">Student workspace</span>
+        <div class="hero-copy">
+          <span class="eyebrow">Submission form</span>
           <h2>Nop bai lam</h2>
-          <p>Sinh vien tim bai thi va dua bai lam vao he thong theo cac buoc.</p>
+          <p>Nhap thong tin sinh vien, chon bai thi va tai len file bai lam theo dung mau workflow upload-answer-api.</p>
         </div>
-        <div class="button-row">
-          <button class="ghost js-logout">Dang xuat</button>
+        <div class="hero-highlight">
+          <strong>Payload gui di</strong>
+          <span>student_name, student_code, subject_code, exam_id, class_code, notes, submission_file</span>
         </div>
       </section>
 
       <section class="section surface-block">
-        <form id="submission-form" class="form-layout">
+        <form id="submission-form" class="form-layout submission-form-layout">
           <div class="panel form-panel">
             <div class="section-header section-header-tight">
               <div>
                 <h3>Thong tin sinh vien va bai thi</h3>
-                <p>Nhap thong tin sinh vien va trie chon bai thi truoc khi dua bai lam.</p>
+                <p>Form duoi day gom cac truong can co de backend forward sang n8n workflow.</p>
               </div>
             </div>
 
             <div class="grid-2">
-              <label>
-                Ma sinh vien
-                <input type="text" name="student_code" placeholder="SV2026001" required>
-              </label>
-              <label>
-                Ho va ten
-                <input type="text" name="student_name" placeholder="Nguyen Minh An" required>
-              </label>
+              <div>
+                <label class="form-label" for="student-code">Ma sinh vien</label>
+                <input id="student-code" type="text" name="student_code" class="form-control" placeholder="SV001" required>
+              </div>
+              <div>
+                <label class="form-label" for="student-name">Ho va ten</label>
+                <input id="student-name" type="text" name="student_name" class="form-control" placeholder="Nguyen Van A" required>
+              </div>
             </div>
 
             <div class="grid-2">
-              <label>
-                Lop
-                <input type="text" name="class_code" placeholder="12A1" required>
-              </label>
-              <label>
-                Tim bai thi
-                <select name="exam_id" required>
+              <div>
+                <label class="form-label" for="class-code">Ma lop</label>
+                <input id="class-code" type="text" name="class_code" class="form-control" placeholder="TOAN101" required>
+              </div>
+              <div>
+                <label class="form-label" for="exam-id">Bai thi</label>
+                <select id="exam-id" name="exam_id" class="form-select" required>
                   <option value="">Chon bai thi</option>
                 </select>
-              </label>
+              </div>
+            </div>
+
+            <div class="grid-2 compact-grid">
+              <div>
+                <label class="form-label" for="exam-id-display">ID bai thi</label>
+                <input id="exam-id-display" type="text" class="form-control" placeholder="Tu dong theo bai thi da chon" readonly>
+              </div>
+              <div>
+                <label class="form-label" for="subject-code-input">Ma mon</label>
+                <input id="subject-code-input" type="text" name="subject_code" class="form-control" placeholder="TOAN" readonly required>
+              </div>
             </div>
 
             <div id="exam-info-display" class="stack-gap-md" style="display: none;">
-              <div style="padding: 12px; background: #f8fbff; border-radius: 8px;">
-                <p><strong>Ten bai thi:</strong> <span id="exam-title"></span></p>
-                <p><strong>Mon hoc:</strong> <span id="exam-subject"></span></p>
-                <p><strong>Loai:</strong> <span id="exam-type"></span></p>
-                <p><strong>Manh de thi:</strong> <span id="exam-code"></span></p>
+              <div class="exam-summary-card">
+                <div>
+                  <span class="summary-label">Ten mon</span>
+                  <strong id="exam-subject">-</strong>
+                </div>
+                <div>
+                  <span class="summary-label">Loai bai thi</span>
+                  <strong id="exam-type">-</strong>
+                </div>
+                <div>
+                  <span class="summary-label">Ma de</span>
+                  <strong id="exam-code">-</strong>
+                </div>
+                <div>
+                  <span class="summary-label">Trang thai</span>
+                  <strong>San sang nop bai</strong>
+                </div>
               </div>
             </div>
 
-            <label class="stack-gap-md">
-              Ghi chu them (tuy chinh)
-              <textarea name="notes" placeholder="Ghi chu bat ky diem can luu y ve bai lam cua ban"></textarea>
-            </label>
+            <div class="stack-gap-md">
+              <label class="form-label" for="notes">Ghi chu them</label>
+              <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="Neu can, ban co the bo sung ghi chu ngan cho bai lam."></textarea>
+            </div>
           </div>
 
           <aside class="detail-card form-side-panel">
             <div class="section-header section-header-tight">
               <div>
                 <h3>Dua file bai lam</h3>
-                <p>Chon file bai lam theo cau truc bat buoc cua bai thi.</p>
+                <p>Workflow hien tai nhan 1 file PDF qua truong <strong>submission_file</strong> va dinh danh bai thi bang <strong>exam_id</strong>.</p>
               </div>
             </div>
 
             <div class="stack-list">
-              <label>
-                File bai lam
-                <input type="file" name="submission_file" accept=".pdf,application/pdf" required>
-              </label>
-              <p><small>Chi ho tro file PDF.</small></p>
+              <div>
+                <label class="form-label" for="submission-file">File bai lam</label>
+                <input id="submission-file" type="file" name="submission_file" class="form-control" accept=".pdf,application/pdf" required>
+              </div>
+              <div class="upload-hints">
+                <div>Chi ho tro dinh dang PDF.</div>
+                <div>Khong can dang nhap de nop bai.</div>
+                <div>Moi lan nop tuong ung 1 bai thi va 1 file.</div>
+              </div>
             </div>
 
             <div id="upload-message" style="margin-top: 16px;"></div>
 
-            <button type="submit" style="margin-top: 16px; width: 100%;">Nop bai lam</button>
+            <button type="submit" class="btn btn-primary w-100" style="margin-top: 16px;">Nop bai lam</button>
           </aside>
         </form>
       </section>

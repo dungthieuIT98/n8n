@@ -178,9 +178,11 @@ async function startServer() {
   });
 
   app.listen(config.port, config.host, () => {
+    const browserHost = config.host === '0.0.0.0' ? '127.0.0.1' : config.host;
+
     console.log(`AI Exam Grading API listening on http://${config.host}:${config.port}`);
-    console.log(`Teacher UI: http://${config.host}:${config.port}/login.html`);
-    console.log(`Student UI: http://${config.host}:${config.port}/student.html`);
+    console.log(`Teacher UI: http://${browserHost}:${config.port}/login.html`);
+    console.log(`Student UI: http://${browserHost}:${config.port}/student.html`);
   });
 }
 

@@ -332,6 +332,128 @@
   top: 1.25rem;
 }
 
+.submission-bootstrap-page .sidebar {
+  background:
+    radial-gradient(circle at top right, rgba(13, 202, 240, 0.18), transparent 24%),
+    linear-gradient(180deg, #0f2236 0%, #17344f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.submission-bootstrap-page .student-brand {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.student-brand-tag {
+  margin-bottom: 0.9rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #eef8ff;
+}
+
+.student-sidebar-meta {
+  padding: 0.2rem 0.25rem 0.55rem;
+}
+
+.submission-bootstrap-page .nav {
+  gap: 0.75rem;
+}
+
+.submission-bootstrap-page .nav a {
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.submission-bootstrap-page .nav a:hover,
+.submission-bootstrap-page .nav a.active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(13, 202, 240, 0.16) 100%);
+  border-color: rgba(162, 228, 255, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.submission-bootstrap-page .workspace-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+  align-items: stretch;
+}
+
+.hero-copy {
+  min-width: 0;
+}
+
+.hero-highlight {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(13, 110, 253, 0.08) 0%, rgba(13, 202, 240, 0.12) 100%);
+  border: 1px solid rgba(173, 215, 255, 0.7);
+}
+
+.hero-highlight strong {
+  color: var(--heading);
+}
+
+.hero-highlight span {
+  color: var(--muted);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.submission-form-layout {
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.8fr);
+}
+
+.compact-grid {
+  margin-top: 1rem;
+}
+
+.exam-summary-card {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(238, 245, 255, 0.96) 0%, rgba(248, 251, 255, 0.96) 100%);
+  border: 1px solid rgba(213, 223, 235, 0.9);
+}
+
+.exam-summary-card div {
+  padding: 0.85rem;
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(228, 234, 243, 0.92);
+}
+
+.summary-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.exam-summary-card strong {
+  color: var(--heading);
+}
+
+.upload-hints {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.upload-hints div {
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.85rem;
+  background: rgba(245, 249, 255, 0.95);
+  border: 1px solid rgba(220, 228, 239, 0.95);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .stack-list {
   display: flex;
   flex-direction: column;
@@ -427,6 +549,74 @@
   overflow: auto;
   margin-top: 1rem;
   border-radius: 1rem;
+}
+
+.results-bootstrap-page .card {
+  border-radius: 1.25rem;
+}
+
+.results-bootstrap-page .btn {
+  min-height: auto;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.75rem;
+  box-shadow: none;
+  font-weight: 600;
+  line-height: 1.4;
+  background: var(--bs-btn-bg);
+  color: var(--bs-btn-color);
+  border-color: var(--bs-btn-border-color);
+}
+
+.results-bootstrap-page .btn:hover {
+  background: var(--bs-btn-hover-bg);
+  color: var(--bs-btn-hover-color);
+  border-color: var(--bs-btn-hover-border-color);
+  box-shadow: none;
+  transform: none;
+}
+
+.results-bootstrap-page .btn:disabled {
+  background: var(--bs-btn-disabled-bg);
+  color: var(--bs-btn-disabled-color);
+  border-color: var(--bs-btn-disabled-border-color);
+}
+
+.results-bootstrap-page .form-control,
+.results-bootstrap-page .form-select {
+  padding: 0.6rem 0.85rem;
+  min-height: calc(1.5em + 1.2rem + 2px);
+  border-radius: 0.75rem;
+  background: var(--bs-body-bg);
+  box-shadow: none;
+}
+
+.results-bootstrap-page .form-control:focus,
+.results-bootstrap-page .form-select:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.14);
+}
+
+.results-bootstrap-page .table {
+  margin-bottom: 0;
+}
+
+.results-bootstrap-page .table > :not(caption) > * > * {
+  background: transparent;
+}
+
+.results-bootstrap-page .table tbody tr {
+  cursor: pointer;
+}
+
+.results-bootstrap-page .table tbody tr td {
+  vertical-align: middle;
+}
+
+.results-focus-bootstrap-card {
+  top: 1.25rem;
+}
+
+.results-bootstrap-page .badge {
+  width: fit-content;
 }
 
 .question-list {
@@ -561,6 +751,12 @@
   .form-layout,
   .filter-grid,
   .results-split {
+    grid-template-columns: 1fr;
+  }
+
+  .submission-bootstrap-page .workspace-hero,
+  .exam-summary-card,
+  .submission-form-layout {
     grid-template-columns: 1fr;
   }
 

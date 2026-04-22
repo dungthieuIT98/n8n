@@ -1,0 +1,408 @@
+{
+  "name": "auto_grade_submissions",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        -112
+      ],
+      "id": "381a5050-328c-4977-a893-4f00c11b4110",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  s.id AS submission_id,\n  s.exam_id,\n  s.student_code,\n  s.student_name,\n  s.class_code,\n  s.subject_code,\n  s.submission_extract,\n  s.status AS submission_status,\n  e.exam_code,\n  e.title AS exam_title,\n  e.answer_extract,\n  e.class_code AS exam_class_code,\n  e.subject_code AS exam_subject_code\nFROM submissions s\nINNER JOIN exams e ON s.exam_id = e.id\nWHERE \n  s.status IN ('extracted', 'uploaded')\n  AND s.submission_extract IS NOT NULL\n  AND e.answer_extract IS NOT NULL\n  AND e.status = 'active'\n  AND NOT EXISTS (\n    SELECT 1 FROM grading_results gr \n    WHERE gr.submission_id = s.id\n  )\nORDER BY s.created_at ASC\nLIMIT 10;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -32,
+        -112
+      ],
+      "id": "812d4bc2-deda-4b78-a3a5-c0baea42aed8",
+      "name": "Get Ungraded Submissions",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-submissions",
+              "leftValue": "={{ $json.submission_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        192,
+        -112
+      ],
+      "id": "292e1e0c-34d2-42ef-99cc-00f245152cfc",
+      "name": "Check if any submissions"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract answer key and student answer\nconst item = $input.first().json;\n\n// Parse JSON nếu là string\nconst parseJson = (data) => {\n  if (typeof data === 'string') {\n    try {\n      return JSON.parse(data);\n    } catch (e) {\n      return null;\n    }\n  }\n  return data;\n};\n\nconst answerKey = parseJson(item.answer_extract) || {};\nconst studentAnswer = parseJson(item.submission_extract) || {};\n\nif (!answerKey.questions || !Array.isArray(answerKey.questions)) {\n  throw new Error(`Exam ${item.exam_code} khong co answer key hop le`);\n}\nif (!studentAnswer || !Array.isArray(studentAnswer)) {\n  throw new Error(`Submission ${item.submission_id} khong co student answer hop le`);\n}\n\nreturn [{\n  json: {\n    submission_id: item.submission_id,\n    exam_id: item.exam_id,\n    student_code: item.student_code,\n    student_name: item.student_name,\n    exam_code: item.exam_code,\n    exam_title: item.exam_title,\n    class_code: item.class_code || item.exam_class_code || null,\n    subject_code: item.subject_code || item.exam_subject_code || null,\n    answer_key: answerKey,\n    student_answer: studentAnswer\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        -144
+      ],
+      "id": "74e9d9f8-4c72-4ff6-b9d1-3a789a34bf4e",
+      "name": "Extract Answer Key & Student Answer"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Ban la AI cham diem bai thi tu luan va trac nghiem.\n\nMuc tieu:\nCham diem bai lam cua hoc sinh dua tren dap an mau va rubric cham diem. Tra ve JSON hop le, khong markdown, khong giai thich them.\n\nDap an mau (Answer Key):\n{{ JSON.stringify($json.answer_key, null, 2) }}\n\nBai lam cua hoc sinh (Student Answer):\n{{ JSON.stringify($json.student_answer, null, 2) }}\n\nQuy tac cham diem:\n1. **Trac nghiem**: So sanh student_answer voi expected_answer\n   - Dung 100% → earned_score = max_score\n   - Sai → earned_score = 0\n\n2. **Tu luan**: Danh gia theo rubrics\n   - Moi rubric co key (noi dung y) va score (diem)\n   - Kiem tra student_answer co chua day du cac y trong rubrics khong\n   - Cho diem tung phan dua tren do chinh xac va day du\n   - Earned score = tong diem cac rubric dat duoc\n\n3. **Feedback**: Giai thich ly do cho diem cho tung cau\n   - Neu dung → chi ra diem manh\n   - Neu sai/thieu → chi ra phan nao sai, thieu y nao\n\nContract output (BAT BUOC):\n{\n  \"graded_questions\": [\n    {\n      \"question_no\": \"1\",\n      \"max_score\": 2,\n      \"earned_score\": 1.5,\n      \"feedback\": \"Dung 3/4 y chinh. Thieu y ve ...\",\n      \"rubric_scores\": [\n        {\"key\": \"Y 1\", \"score\": 0.5, \"earned\": 0.5, \"comment\": \"Dung\"},\n        {\"key\": \"Y 2\", \"score\": 0.5, \"earned\": 0.5, \"comment\": \"Dung\"},\n        {\"key\": \"Y 3\", \"score\": 0.5, \"earned\": 0.5, \"comment\": \"Dung\"},\n        {\"key\": \"Y 4\", \"score\": 0.5, \"earned\": 0, \"comment\": \"Thieu\"}\n      ]\n    }\n  ],\n  \"total_score\": 8.5,\n  \"total_max_score\": 10\n}\n\nLuu y:\n- Neu cau hoi khong co trong student_answer → earned_score = 0\n- Neu student_answer la null/empty → earned_score = 0\n- Phai cham tat ca cac cau hoi trong answer_key\n- total_score phai bang tong earned_score cua tat ca cau hoi"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        -192
+      ],
+      "id": "ab714206-9465-488d-aa84-dd7ab2c5477c",
+      "name": "GPT Grade Submission",
+      "credentials": {
+        "openAiApi": {
+          "id": "TDDvQeXhNqsO4nRg",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "extract-gpt-response",
+              "name": "grading_text",
+              "value": "={{ $json.output[0].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1072,
+        -112
+      ],
+      "id": "43118075-c686-4982-84cd-919e8f177ab2",
+      "name": "Extract GPT Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const meta = $('Extract Answer Key & Student Answer').first().json;\nconst gradingText = String($input.first().json.grading_text || '').trim();\n\nif (!gradingText) {\n  throw new Error('GPT khong tra ve ket qua cham diem');\n}\n\nlet gradingResult;\ntry {\n  gradingResult = JSON.parse(gradingText);\n} catch (error) {\n  throw new Error(`Khong parse duoc JSON grading result: ${error.message}`);\n}\n\nif (!gradingResult || typeof gradingResult !== 'object') {\n  throw new Error('Grading result khong dung dinh dang object');\n}\n\nconst gradedQuestions = Array.isArray(gradingResult.graded_questions) ? gradingResult.graded_questions : [];\n\nconst totalScore = gradedQuestions.reduce((sum, q) => {\n  const earned = Number(q.earned_score || 0);\n  return sum + (Number.isFinite(earned) ? earned : 0);\n}, 0);\n\nconst totalMaxScore = gradedQuestions.reduce((sum, q) => {\n  const max = Number(q.max_score || 0);\n  return sum + (Number.isFinite(max) ? max : 0);\n}, 0);\n\nconst normalizedGradingResult = {\n  graded_questions: gradedQuestions.map(q => ({\n    question_no: String(q.question_no || ''),\n    max_score: Number(q.max_score || 0),\n    earned_score: Number(q.earned_score || 0),\n    feedback: String(q.feedback || ''),\n    rubric_scores: Array.isArray(q.rubric_scores) ? q.rubric_scores.map(r => ({\n      key: String(r.key || ''),\n      score: Number(r.score || 0),\n      earned: Number(r.earned || 0),\n      comment: String(r.comment || '')\n    })) : []\n  })),\n  total_score: Number(totalScore.toFixed(2)),\n  total_max_score: Number(totalMaxScore.toFixed(2)),\n  graded_at: new Date().toISOString()\n};\n\nreturn [{\n  json: {\n    submission_id: meta.submission_id,\n    exam_id: meta.exam_id,\n    student_code: meta.student_code,\n    student_name: meta.student_name,\n    exam_code: meta.exam_code,\n    exam_title: meta.exam_title,\n    class_code: meta.class_code,\n    subject_code: meta.subject_code,\n    total_score: normalizedGradingResult.total_score,\n    grading_result: normalizedGradingResult\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        -112
+      ],
+      "id": "02a00fb3-5449-45f1-92f2-bbf292adc86e",
+      "name": "Calculate Total Score"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nfunction escapeLiteral(value) {\n  return String(value ?? '').replace(/'/g, \"''\");\n}\n\nfunction sqlString(value) {\n  if (!value) return 'NULL';\n  return `'${escapeLiteral(value)}'`;\n}\n\nfunction sqlNumber(value) {\n  const number = Number(value);\n  return Number.isFinite(number) ? String(number) : 'NULL';\n}\n\nfunction sqlJson(value) {\n  if (value === undefined || value === null) {\n    return 'NULL';\n  }\n  return `'${escapeLiteral(JSON.stringify(value))}'::jsonb`;\n}\n\nconst maxScore = data.grading_result?.total_max_score || null;\n\nconst sql = `\nINSERT INTO grading_results (\n  submission_id,\n  exam_id,\n  exam_code,\n  exam_title,\n  class_code,\n  subject_code,\n  student_code,\n  student_name,\n  grading_type,\n  total_score,\n  max_score,\n  grading_detail,\n  graded_by,\n  graded_by_name,\n  status\n) VALUES (\n  ${sqlNumber(data.submission_id)},\n  ${sqlNumber(data.exam_id)},\n  ${sqlString(data.exam_code)},\n  ${sqlString(data.exam_title)},\n  ${sqlString(data.class_code)},\n  ${sqlString(data.subject_code)},\n  ${sqlString(data.student_code)},\n  ${sqlString(data.student_name)},\n  'auto',\n  ${sqlNumber(data.total_score)},\n  ${sqlNumber(maxScore)},\n  ${sqlJson(data.grading_result)},\n  0,\n  'System (AI)',\n  'completed'\n) RETURNING id, submission_id, exam_id, student_code, total_score, grading_attempt, graded_at;`;\n\nreturn [{\n  json: {\n    submission_id: data.submission_id,\n    exam_id: data.exam_id,\n    student_code: data.student_code,\n    student_name: data.student_name,\n    exam_code: data.exam_code,\n    exam_title: data.exam_title,\n    class_code: data.class_code,\n    subject_code: data.subject_code,\n    total_score: data.total_score,\n    grading_result: data.grading_result,\n    sql\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        -112
+      ],
+      "id": "0b84e999-0902-4332-b537-3c1d2b6bfb62",
+      "name": "Build Insert SQL"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.sql }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1728,
+        -112
+      ],
+      "id": "a16fc058-c026-48d9-acee-6a6979f7fef2",
+      "name": "Insert Grading Result",
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO system_logs (\n  log_type,\n  ref_table,\n  ref_id,\n  exam_id,\n  submission_id,\n  student_code,\n  student_name,\n  class_code,\n  workflow_execution_id,\n  model_name,\n  status,\n  message,\n  response_payload,\n  created_at,\n  created_by,\n  updated_by\n) VALUES (\n  'grading_completed',\n  'grading_results',\n  {{ $('Insert Grading Result').item.json.id }},\n  {{ $('Insert Grading Result').item.json.exam_id }},\n  {{ $('Insert Grading Result').item.json.submission_id }},\n  '{{ ($('Insert Grading Result').item.json.student_code || '').replace(/'/g, \"''\") }}',\n  '{{ ($('Build Update SQL').item.json.student_name || '').replace(/'/g, \"''\") }}',\n  {{ $('Build Update SQL').item.json.class_code ? `'${$('Build Update SQL').item.json.class_code.replace(/'/g, \"''\")}'` : 'NULL' }},\n  '{{ $execution.id }}',\n  'gpt-4.1-mini',\n  'completed',\n  'Da cham xong submission ID {{ $('Insert Grading Result').item.json.submission_id }} (lan {{ $('Insert Grading Result').item.json.grading_attempt }}), diem: {{ $('Insert Grading Result').item.json.total_score }}/{{ $('Build Update SQL').item.json.grading_result.total_max_score }}',\n  jsonb_build_object(\n    'grading_result_id', {{ $('Insert Grading Result').item.json.id }},\n    'submission_id', {{ $('Insert Grading Result').item.json.submission_id }},\n    'exam_id', {{ $('Insert Grading Result').item.json.exam_id }},\n    'student_code', '{{ ($('Insert Grading Result').item.json.student_code || '').replace(/'/g, \"''\") }}',\n    'grading_attempt', {{ $('Insert Grading Result').item.json.grading_attempt }},\n    'total_score', {{ $('Insert Grading Result').item.json.total_score }},\n    'total_max_score', {{ $('Build Update SQL').item.json.grading_result.total_max_score }},\n    'graded_at', '{{ $('Insert Grading Result').item.json.graded_at }}'\n  ),\n  NOW(),\n  0,\n  0\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1952,
+        -112
+      ],
+      "id": "2ee7fe53-113c-4552-8299-758b8168b600",
+      "name": "Log Grading Result",
+      "credentials": {
+        "postgres": {
+          "id": "niW3RY5UmjUzxGIm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $('Build Insert SQL').first().json;\n\nreturn [{\n  json: {\n    ok: true,\n    message: `Successfully graded submission ${result.submission_id}`,\n    submission_id: result.submission_id,\n    score: result.score\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        -112
+      ],
+      "id": "cd81f6e0-ffa5-4e3a-a18f-1164654173ea",
+      "name": "Prepare Loop Output"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        288,
+        160
+      ],
+      "id": "205daaf3-9c76-4599-8d72-cd9c37f7eef0",
+      "name": "No Submissions Found"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        432,
+        -192
+      ],
+      "id": "83f5c5f4-579a-4abc-b9a8-f68c0133e3b2",
+      "name": "Loop Submissions"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Ungraded Submissions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ungraded Submissions": {
+      "main": [
+        [
+          {
+            "node": "Check if any submissions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if any submissions": {
+      "main": [
+        [
+          {
+            "node": "Loop Submissions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Submissions Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Submissions": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Extract Answer Key & Student Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Answer Key & Student Answer": {
+      "main": [
+        [
+          {
+            "node": "GPT Grade Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT Grade Submission": {
+      "main": [
+        [
+          {
+            "node": "Extract GPT Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract GPT Response": {
+      "main": [
+        [
+          {
+            "node": "Calculate Total Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Total Score": {
+      "main": [
+        [
+          {
+            "node": "Build Insert SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Grading Result": {
+      "main": [
+        [
+          {
+            "node": "Prepare Loop Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Loop Output": {
+      "main": [
+        [
+          {
+            "node": "Loop Submissions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Insert SQL": {
+      "main": [
+        [
+          {
+            "node": "Insert Grading Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Grading Result": {
+      "main": [
+        [
+          {
+            "node": "Log Grading Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8e25f1df-0946-400a-9d58-90b6742ca387",
+  "meta": {
+    "instanceId": "8120a54d1a3549819c2312ef6fd3824d752b9ddef79c687fc69a09152bfe9d23"
+  },
+  "id": "hNwJfwSSlVzjF13u",
+  "tags": []
+}
