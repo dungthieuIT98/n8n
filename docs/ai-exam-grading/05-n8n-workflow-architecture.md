@@ -22,7 +22,7 @@ He thong gom 4 lop chinh:
 3. Luu file de thi va file dap an vao storage, cap nhat `question_file_path` va `answer_file_path` trong `exams`.
 4. Goi workflow extract dap an da co san.
 5. Luu file de thi va file dap an goc len Drive/storage, cap nhat `question_file_path` va `answer_file_path` bang URL truy cap file.
-6. Luu JSON extract dap an truc tiep trong `exams.answer_extract_file_path`.
+6. Luu JSON extract dap an truc tiep trong `exams.answer_extract`.
 8. Cap nhat trang thai de thi thanh `ready` neu thanh cong.
 9. Ghi log vao `system_logs`.
 
@@ -39,7 +39,7 @@ He thong gom 4 lop chinh:
 2. Tao ban ghi `submissions` voi thong tin sinh vien, lop, mon hoc.
 3. Luu file bai nop vao storage va cap nhat `submission_file_path`.
 4. Goi workflow extract bai thi sinh vien da co san.
-5. Luu file JSON extract bai lam vao storage va cap nhat `submission_extract_file_path`.
+5. Luu file JSON extract bai lam vao storage va cap nhat `submission_extract`.
 6. Day job tiep sang workflow cham diem.
 
 ### 3.3 Workflow cham diem AI
@@ -47,8 +47,8 @@ He thong gom 4 lop chinh:
 - Sau khi file extract bai lam cua sinh vien da san sang trong `submissions`.
 
 **Buoc xu ly**
-1. Lay JSON dap an mau truc tiep tu `exams.answer_extract_file_path`.
-2. Lay file JSON bai lam da extract tu `submissions.submission_extract_file_path`.
+1. Lay JSON dap an mau truc tiep tu `exams.answer_extract`.
+2. Lay file JSON bai lam da extract tu `submissions.submission_extract`.
 3. Xac dinh loai bai thi: trac nghiem hay tu luan.
 4. Goi AI grading service voi prompt mau.
 5. Nhan ve ket qua cham tong hop va chi tiet tung cau trong cung 1 JSON.

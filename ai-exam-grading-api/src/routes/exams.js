@@ -116,7 +116,7 @@ router.post('/', requireAuth, async (request, response, next) => {
         teacher_id,
         question_file_path,
         answer_file_path,
-        answer_extract_file_path,
+        answer_extract,
         status,
         created_by,
         updated_by

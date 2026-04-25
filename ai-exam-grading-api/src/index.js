@@ -49,7 +49,7 @@ async function ensureDemoData() {
         INSERT INTO exams (
           exam_code, version, title, description, class_code, subject_code, subject_name,
           exam_type, exam_round, teacher_id, question_file_path, answer_file_path,
-          answer_extract_file_path, status, created_by, updated_by
+          answer_extract, status, created_by, updated_by
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $10, $10)
         RETURNING id
@@ -66,7 +66,7 @@ async function ensureDemoData() {
       await client.query(`
         INSERT INTO submissions (
           exam_id, student_code, student_name, class_code, subject_code,
-          submission_file_path, submission_extract_file_path, grading_result_file_path,
+          submission_file_path, submission_extract, grading_result_file_path,
           total_score, max_score, ai_confidence, source_type, status,
           published_at, reviewed_by, reviewed_at, review_status, notes,
           created_by, updated_by, graded_at

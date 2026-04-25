@@ -32,7 +32,7 @@ create table if not exists exams (
   teacher_id bigint not null references teachers(id) on update cascade on delete restrict,
   question_file_path text,
   answer_file_path text,
-  answer_extract_file_path jsonb,
+  answer_extract jsonb,
   status varchar(30) not null default 'draft'
     check (status in ('draft', 'processing', 'ready', 'archived')),
   created_at timestamp not null default now(),
@@ -42,12 +42,12 @@ create table if not exists exams (
 );
 
 alter table exams
-  alter column answer_extract_file_path type jsonb
+  alter column answer_extract type jsonb
   using case
-    when answer_extract_file_path is null then null
-    when btrim(answer_extract_file_path::text) = '' then null
-    when left(btrim(answer_extract_file_path::text), 1) in ('{', '[') then (answer_extract_file_path::text)::jsonb
-    else to_jsonb(answer_extract_file_path::text)
+    when answer_extract is null then null
+    when btrim(answer_extract::text) = '' then null
+    when left(btrim(answer_extract::text), 1) in ('{', '[') then (answer_extract::text)::jsonb
+    else to_jsonb(answer_extract::text)
   end;
 
 create table if not exists submissions (
@@ -58,7 +58,7 @@ create table if not exists submissions (
   class_code varchar(50) not null,
   subject_code varchar(50),
   submission_file_path text,
-  submission_extract_file_path text,
+  submission_extract text,
   grading_result_file_path text,
   total_score numeric(5,2),
   max_score numeric(5,2),

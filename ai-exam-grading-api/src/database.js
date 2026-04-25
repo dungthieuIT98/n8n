@@ -26,7 +26,7 @@ const ENTITY_CONFIG = {
       'e.id', 'e.exam_code', 'e.version', 'e.title', 'e.description',
       'e.class_code', 'e.subject_code', 'e.subject_name', 'e.exam_type', 'e.exam_round',
       'e.teacher_id', 't.full_name AS teacher_name', 'e.question_file_path',
-      'e.answer_file_path', 'e.answer_extract_file_path', 'e.status',
+      'e.answer_file_path', 'e.answer_extract', 'e.status',
       'e.created_at', 'e.updated_at'
     ],
     joins: ['LEFT JOIN teachers t ON t.id = e.teacher_id']
@@ -40,7 +40,7 @@ const ENTITY_CONFIG = {
     select: [
       's.id', 's.exam_id', 'e.exam_code', 'e.title AS exam_title', 'e.subject_name', 'e.exam_type',
       's.student_code', 's.student_name', 's.class_code', 's.subject_code',
-      's.submission_file_path', 's.submission_extract_file_path', 's.grading_result_file_path',
+      's.submission_file_path', 's.submission_extract', 's.grading_result_file_path',
       's.total_score', 's.max_score', 's.ai_confidence', 's.submitted_at', 's.graded_at',
       's.status', 's.review_status', 's.notes', 's.published_at',
       's.reviewed_by', 's.reviewed_at', 's.created_at', 's.updated_at'

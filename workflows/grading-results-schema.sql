@@ -338,8 +338,8 @@ FROM submissions s
 JOIN exams e ON s.exam_id = e.id
 LEFT JOIN grading_results gr ON s.id = gr.submission_id
 WHERE gr.id IS NULL
-  AND s.submission_extract_file_path IS NOT NULL
-  AND e.answer_extract_file_path IS NOT NULL
+  AND s.submission_extract IS NOT NULL
+  AND e.answer_extract IS NOT NULL
 ORDER BY s.created_at;
 
 -- So sánh điểm giữa các lần chấm
@@ -366,7 +366,7 @@ ORDER BY gr1.grading_attempt;
 -- - id, exam_id
 -- - student_code, student_name
 -- - submission_file_path (file gốc)
--- - submission_extract_file_path (JSON extracted)
+-- - submission_extract (JSON extracted)
 -- - status ('uploaded', 'extracting', 'extracted', 'failed')
 -- - created_at, updated_at
 --

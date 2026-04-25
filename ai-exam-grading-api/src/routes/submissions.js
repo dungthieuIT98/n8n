@@ -30,7 +30,7 @@ async function studentResultsHandler(request, response, next) {
         s.class_code,
         s.subject_code,
         s.submission_file_path,
-        s.submission_extract_file_path,
+        s.submission_extract,
         s.grading_result_file_path,
         s.total_score,
         s.max_score,

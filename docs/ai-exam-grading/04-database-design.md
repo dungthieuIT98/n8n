@@ -37,7 +37,7 @@ Luu thong tin de thi do giao vien tao, bao gom file de thi, file dap an mau, va 
 | teacher_id | uuid | FK den teachers |
 | question_file_path | text | Duong dan file de thi |
 | answer_file_path | text | Duong dan file dap an mau |
-| answer_extract_file_path | jsonb | JSON extract dap an da chuan hoa |
+| answer_extract | jsonb | JSON extract dap an da chuan hoa |
 | status | varchar(30) | draft, processing, ready, archived |
 | created_at | timestamp | Ngay tao |
 | updated_at | timestamp | Ngay cap nhat |
@@ -56,7 +56,7 @@ Luu bai nop cua sinh vien, file extract, va ket qua cham tong hop ngay tren cung
 | class_code | varchar(50) | Ma lop cua sinh vien |
 | subject_code | varchar(50) | Ma mon hoc cua bai nop |
 | submission_file_path | text | Duong dan file bai nop goc |
-| submission_extract_file_path | text | Duong dan file JSON extract bai lam |
+| submission_extract | text | Duong dan file JSON extract bai lam |
 | grading_result_file_path | text | Duong dan file JSON ket qua cham tong hop, bao gom chi tiet tung cau |
 | total_score | numeric(5,2) | Diem tong sau khi cham |
 | max_score | numeric(5,2) | Diem toi da |
@@ -153,7 +153,7 @@ create table exams (
   teacher_id uuid references teachers(id),
   question_file_path text,
   answer_file_path text,
-  answer_extract_file_path text,
+  answer_extract text,
   status varchar(30) not null default 'draft',
   created_at timestamp not null default now(),
   updated_at timestamp not null default now()
@@ -167,7 +167,7 @@ create table submissions (
   class_code varchar(50) not null,
   subject_code varchar(50),
   submission_file_path text,
-  submission_extract_file_path text,
+  submission_extract text,
   grading_result_file_path text,
   total_score numeric(5,2),
   max_score numeric(5,2),

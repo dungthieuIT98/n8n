@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <strong>File</strong>
           <p>De thi: ${exam.question_file_path}</p>
           <p>Dap an: ${exam.answer_file_path}</p>
-          <div>Extract: ${renderExamExtract(exam.answer_extract_file_path)}</div>
+          <div>Extract: ${renderExamExtract(exam.answer_extract)}</div>
         </div>
         <div class="list-card" style="margin-top: 12px;">
           <strong>Bai nop lien quan</strong>

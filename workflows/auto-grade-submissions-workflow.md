@@ -25,18 +25,18 @@ SELECT
   s.id AS submission_id,
   s.exam_id,
   s.student_id,
-  s.submission_extract_file_path,
+  s.submission_extract,
   s.status AS submission_status,
   e.exam_code,
   e.title AS exam_title,
-  e.answer_extract_file_path,
+  e.answer_extract,
   e.class_code
 FROM submissions s
 INNER JOIN exams e ON s.exam_id = e.id
 WHERE 
   (s.status = 'submitted' OR s.graded_at IS NULL)
-  AND s.submission_extract_file_path IS NOT NULL
-  AND e.answer_extract_file_path IS NOT NULL
+  AND s.submission_extract IS NOT NULL
+  AND e.answer_extract IS NOT NULL
 ORDER BY s.created_at ASC
 LIMIT 10;
 ```
@@ -51,8 +51,8 @@ LIMIT 10;
 - Node: `Loop Submissions` (Loop Over Items)
 
 ### 5. Extract Answer Key & Student Answer
-- Lấy answer key từ `answer_extract_file_path` (JSON từ exam)
-- Lấy student answer từ `submission_extract_file_path` (JSON từ submission)
+- Lấy answer key từ `answer_extract` (JSON từ exam)
+- Lấy student answer từ `submission_extract` (JSON từ submission)
 - Node: `Extract Answer Key & Student Answer` (Code)
 
 ### 6. Call GPT to Grade
@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS grading_results (
 ## Grading Prompt cho GPT
 
 Prompt sẽ nhận:
-- **Answer Key** (từ exam.answer_extract_file_path):
+- **Answer Key** (từ exam.answer_extract):
 ```json
 {
   "questions": [
@@ -195,7 +195,7 @@ Prompt sẽ nhận:
 }
 ```
 
-- **Student Answer** (từ submission.submission_extract_file_path):
+- **Student Answer** (từ submission.submission_extract):
 ```json
 {
   "questions": [
@@ -231,8 +231,8 @@ Output mong muốn:
 
 ## Error Handling
 
-- Nếu submission không có `submission_extract_file_path` → bỏ qua
-- Nếu exam không có `answer_extract_file_path` → bỏ qua
+- Nếu submission không có `submission_extract` → bỏ qua
+- Nếu exam không có `answer_extract` → bỏ qua
 - Nếu GPT API fail → log error và tiếp tục submission tiếp theo
 - Nếu update database fail → log error
 
