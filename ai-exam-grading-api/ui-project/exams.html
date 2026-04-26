@@ -7,94 +7,100 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/app.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: "Be Vietnam Pro", system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  </style>
 </head>
-<body data-page="exams" class="bootstrap-shell">
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <h1><a href="index.html">AI Exam Grading</a></h1>
-        <p>Project UI tach file theo spec 01, 02, 03, 04.</p>
+<body data-page="exams" class="bg-slate-50 text-slate-900">
+  <div class="min-h-screen flex">
+    <aside class="w-64 bg-white border-r border-slate-200 p-4">
+      <div class="mb-4">
+        <div class="text-xs font-semibold text-slate-500">Teacher Portal</div>
+        <div class="text-lg font-extrabold"><a class="hover:underline" href="index.html">AI Exam Grading</a></div>
+        <div class="text-xs text-slate-600 mt-1">Project UI tach file theo spec 01, 02, 03, 04.</div>
       </div>
-      <div><small id="current-user-label">Chua dang nhap</small></div>
-      <nav class="nav" id="nav"></nav>
+      <div id="current-user-label" class="text-xs text-slate-600 mb-3">Chua dang nhap</div>
+      <nav class="space-y-1" id="nav"></nav>
+      <div class="mt-6 pt-4 border-t border-slate-200">
+        <button class="js-logout w-full px-3 py-2 rounded-lg border border-slate-300 hover:bg-white bg-slate-100 text-sm font-semibold">
+          Dang xuat
+        </button>
+      </div>
     </aside>
 
-    <main class="main">
-      <section class="hero workspace-hero">
-        <div>
-          <span class="eyebrow">Teacher workspace</span>
-          <h2>Quan ly de thi</h2>
-          <p>Loc, xem chi tiet va tang version de thi khi cap nhat file de thi hoac dap an.</p>
-        </div>
-        <div class="button-row">
-          <button class="ghost js-logout">Dang xuat</button>
-          <a class="button-link ghost" href="upload.html">Them de thi moi</a>
-        </div>
-      </section>
+    <main class="flex-1 p-6">
+      <div class="max-w-6xl mx-auto space-y-6">
+        <section class="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          <div>
+            <div class="text-xs font-semibold text-slate-500">Teacher workspace</div>
+            <h1 class="text-2xl font-extrabold mt-1">Quan ly de thi</h1>
+            <p class="text-sm text-slate-600 mt-1">Loc, xem chi tiet va tang version de thi khi cap nhat file de thi hoac dap an.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <a class="px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold" href="upload.html">Them de thi moi</a>
+          </div>
+        </section>
 
-      <section class="section surface-block">
-        <div class="panel">
-            <div class="section-header section-header-tight">
-              <div>
-                <h3>Danh sach de thi</h3>
-                <p>Loc nhanh theo lop, mon, loai va trang thai de kiem soat version.</p>
-              </div>
+        <section class="bg-white border border-slate-200 rounded-2xl">
+          <div class="p-4 border-b border-slate-200">
+            <h2 class="font-extrabold">Danh sach de thi</h2>
+            <p class="text-sm text-slate-600">Loc nhanh theo lop, mon, loai va trang thai de kiem soat version.</p>
+          </div>
+
+          <div class="p-4 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <label class="block">
+                <div class="text-sm font-semibold text-slate-700">Lop</div>
+                <select id="exam-filter-class" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
+              </label>
+              <label class="block">
+                <div class="text-sm font-semibold text-slate-700">Mon hoc</div>
+                <select id="exam-filter-subject" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
+              </label>
+              <label class="block">
+                <div class="text-sm font-semibold text-slate-700">Loai bai thi</div>
+                <select id="exam-filter-type" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
+              </label>
+              <label class="block">
+                <div class="text-sm font-semibold text-slate-700">Trang thai</div>
+                <select id="exam-filter-status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
+              </label>
             </div>
 
-            <div class="filter-grid">
-              <label>
-                Lop
-                <select id="exam-filter-class"></select>
-              </label>
-              <label>
-                Mon hoc
-                <select id="exam-filter-subject"></select>
-              </label>
-              <label>
-                Loai bai thi
-                <select id="exam-filter-type"></select>
-              </label>
-              <label>
-                Trang thai
-                <select id="exam-filter-status"></select>
-              </label>
-            </div>
-
-            <div class="table-wrapper compact-table">
-              <table>
-                <thead>
+            <div class="overflow-auto border border-slate-200 rounded-xl">
+              <table class="min-w-full text-sm">
+                <thead class="text-left text-slate-600 bg-slate-50">
                   <tr>
-                    <th>Ma de thi</th>
-                    <th>Version</th>
-                    <th>Ten de thi</th>
-                    <th>Lop</th>
-                    <th>Mon</th>
-                    <th>Loai</th>
-                    <th>So bai nop</th>
-                    <th>Trang thai</th>
-                    <th>Ngay tao</th>
-                    <th>Nguoi tao</th>
-                    <th>Hanh dong</th>
+                    <th class="py-2 px-3">Ma de thi</th>
+                    <th class="py-2 px-3">Version</th>
+                    <th class="py-2 px-3">Ten de thi</th>
+                    <th class="py-2 px-3">Lop</th>
+                    <th class="py-2 px-3">Mon</th>
+                    <th class="py-2 px-3">Loai</th>
+                    <th class="py-2 px-3">So bai nop</th>
+                    <th class="py-2 px-3">Trang thai</th>
+                    <th class="py-2 px-3">Ngay tao</th>
+                    <th class="py-2 px-3">Nguoi tao</th>
+                    <th class="py-2 px-3">Hanh dong</th>
                   </tr>
                 </thead>
-                <tbody id="exam-table-body"></tbody>
+                <tbody id="exam-table-body" class="divide-y divide-slate-100"></tbody>
               </table>
             </div>
-        </div>
-      </section>
+          </div>
+        </section>
+      </div>
 
       <!-- Detail Modal -->
-      <div class="modal" id="exam-detail-modal">
-        <div class="modal-overlay" id="exam-modal-overlay"></div>
-        <div class="modal-container">
-          <div class="modal-header">
-            <h3 id="exam-modal-title">Chi tiet de thi</h3>
-            <button class="modal-close" data-close-modal="exam-detail-modal" id="exam-modal-close">&times;</button>
+      <div data-modal id="exam-detail-modal" class="fixed inset-0 hidden items-center justify-center p-4">
+        <div data-modal-overlay class="absolute inset-0 bg-black/40"></div>
+        <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-200">
+          <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+            <h3 id="exam-modal-title" class="font-extrabold">Chi tiet de thi</h3>
+            <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" data-close-modal="exam-detail-modal" id="exam-modal-close">Dong</button>
           </div>
-          <div class="modal-body" id="exam-detail-content">
+          <div class="p-4" id="exam-detail-content">
             <p>Dang tai...</p>
           </div>
         </div>
@@ -107,6 +113,5 @@
   <script src="js/common.js"></script>
   <script src="js/layout.js"></script>
   <script src="js/exams.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

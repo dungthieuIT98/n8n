@@ -38,20 +38,46 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       document.getElementById("log-modal-title").textContent = `${log.log_type} - ${log.status}`;
       document.getElementById("log-detail-content").innerHTML = `
-        <h3>${log.log_type} - ${log.status}</h3>
-        <div class="detail-meta">
-          <div><strong>Ref</strong><br>${log.ref_table}:${log.ref_id}</div>
-          <div><strong>Exam code</strong><br>${log.exam_code || "-"}</div>
-          <div><strong>student_code</strong><br>${log.student_code || "-"}</div>
-          <div><strong>workflow_execution_id</strong><br>${log.workflow_execution_id}</div>
-          <div><strong>Model</strong><br>${log.model_name || "-"}</div>
-          <div><strong>Thoi gian</strong><br>${log.created_at}</div>
-        </div>
-        <div class="list-card">
-          <p><strong>Thong diep:</strong> ${log.message}</p>
-          <p><strong>Request:</strong> <pre style="background: #f5f5f5; padding: 8px; overflow-x: auto;">${formatPayload(log.request_payload)}</pre></p>
-          <p><strong>Response:</strong> <pre style="background: #f5f5f5; padding: 8px; overflow-x: auto;">${formatPayload(log.response_payload)}</pre></p>
-          <p><strong>Loi:</strong> ${log.error_message || "Khong co"}</p>
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Ref</div>
+              <div class="font-bold">${log.ref_table}:${log.ref_id}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Exam code</div>
+              <div class="font-bold">${log.exam_code || "-"}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">student_code</div>
+              <div class="font-bold">${log.student_code || "-"}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">workflow_execution_id</div>
+              <div class="font-bold">${log.workflow_execution_id}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Model</div>
+              <div class="font-bold">${log.model_name || "-"}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Thoi gian</div>
+              <div class="font-bold">${log.created_at}</div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 p-4 space-y-3 text-sm">
+            <div><span class="font-semibold">Thong diep:</span> ${log.message}</div>
+            <div>
+              <div class="font-semibold">Request</div>
+              <pre class="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-3 overflow-auto text-xs">${formatPayload(log.request_payload)}</pre>
+            </div>
+            <div>
+              <div class="font-semibold">Response</div>
+              <pre class="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-3 overflow-auto text-xs">${formatPayload(log.response_payload)}</pre>
+            </div>
+            <div><span class="font-semibold">Loi:</span> ${log.error_message || "Khong co"}</div>
+          </div>
         </div>
       `;
     } catch (error) {
@@ -74,18 +100,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         && (!workflow || workflowId.includes(workflow));
     }).map((log) => `
       <tr>
-        <td>${log.created_at}</td>
-        <td>${log.log_type}</td>
-        <td>${log.ref_table}:${log.ref_id}</td>
-        <td>${log.student_code || "-"}</td>
-        <td>${log.class_code || "-"}</td>
-        <td>${window.AppUI.renderStatus(log.status)}</td>
-        <td>${log.message}</td>
-        <td>${log.workflow_execution_id}</td>
+        <td class="py-2 px-3">${log.created_at}</td>
+        <td class="py-2 px-3 font-semibold">${log.log_type}</td>
+        <td class="py-2 px-3">${log.ref_table}:${log.ref_id}</td>
+        <td class="py-2 px-3">${log.student_code || "-"}</td>
+        <td class="py-2 px-3">${log.class_code || "-"}</td>
+        <td class="py-2 px-3">${window.AppUI.renderStatus(log.status)}</td>
+        <td class="py-2 px-3">${log.message}</td>
+        <td class="py-2 px-3">${log.workflow_execution_id}</td>
         <td>
-          <div class="table-actions">
-            <button class="secondary" data-view-log="${log.id}">Xem</button>
-            ${log.status === "failed" ? `<button data-retry-log="${log.id}">Retry</button>` : ""}
+          <div class="flex flex-wrap gap-2 py-2 px-3">
+            <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" data-view-log="${log.id}">Xem</button>
+            ${log.status === "failed" ? `<button class="px-2 py-1 rounded-lg bg-slate-900 text-white text-xs font-semibold" data-retry-log="${log.id}">Retry</button>` : ""}
           </div>
         </td>
       </tr>

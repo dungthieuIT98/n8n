@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const submitButton = form.querySelector('button[type="submit"]');
 
     if (!questionFile || !answerFile) {
-      message.innerHTML = '<div class="message error">Can chon day du file de thi va file dap an.</div>';
+      message.innerHTML = '<div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">Can chon day du file de thi va file dap an.</div>';
       return;
     }
 
@@ -37,11 +37,11 @@ document.addEventListener("DOMContentLoaded", () => {
       formData.set("answer_file", answerFile);
 
       const payload = await window.AppApi.createExam(formData);
-      message.innerHTML = `<div class="message success">Da tao de thi ${payload.data.exam_code}. Trang thai hien tai: ${payload.data.status}.</div>`;
+      message.innerHTML = `<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">Da tao de thi ${payload.data.exam_code}. Trang thai hien tai: ${payload.data.status}.</div>`;
       form.reset();
       form.elements.teacher_id.value = currentTeacher.id;
     } catch (error) {
-      message.innerHTML = `<div class="message error">${error.message}</div>`;
+      message.innerHTML = `<div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">${error.message}</div>`;
     } finally {
       submitButton.disabled = false;
     }

@@ -66,28 +66,50 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       document.getElementById("exam-modal-title").textContent = exam.title;
       document.getElementById("exam-detail-content").innerHTML = `
-        <h3>${exam.title}</h3>
-        <div class="detail-meta">
-          <div><strong>Ma de thi</strong><br>${exam.exam_code}</div>
-          <div><strong>Version</strong><br>v${exam.version}</div>
-          <div><strong>Lop / Mon</strong><br>${exam.class_code} / ${exam.subject_name}</div>
-          <div><strong>Loai / Dot</strong><br>${exam.exam_type} / ${exam.exam_round}</div>
-          <div><strong>Trang thai</strong><br>${window.AppUI.renderStatus(exam.status)}</div>
-          <div><strong>Nguoi tao</strong><br>${exam.teacher_name}</div>
-        </div>
-        <div class="list-card">
-          <strong>Mo ta</strong>
-          <p>${exam.description || "Chua co mo ta"}</p>
-        </div>
-        <div class="list-card" style="margin-top: 12px;">
-          <strong>File</strong>
-          <p>De thi: ${exam.question_file_path}</p>
-          <p>Dap an: ${exam.answer_file_path}</p>
-          <div>Extract: ${renderExamExtract(exam.answer_extract)}</div>
-        </div>
-        <div class="list-card" style="margin-top: 12px;">
-          <strong>Bai nop lien quan</strong>
-          <p>${submissionCount} bai nop da duoc ghi nhan.</p>
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Ma de thi</div>
+              <div class="font-bold">${exam.exam_code}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Version</div>
+              <div class="font-bold">v${exam.version}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Trang thai</div>
+              <div>${window.AppUI.renderStatus(exam.status)}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Lop / Mon</div>
+              <div class="font-bold">${exam.class_code} / ${exam.subject_name}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Loai / Dot</div>
+              <div class="font-bold">${exam.exam_type} / ${exam.exam_round}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="text-xs font-semibold text-slate-500">Nguoi tao</div>
+              <div class="font-bold">${exam.teacher_name}</div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 p-4 space-y-2 text-sm">
+            <div class="font-extrabold">Mo ta</div>
+            <div class="text-slate-700">${exam.description || "Chua co mo ta"}</div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 p-4 space-y-2 text-sm">
+            <div class="font-extrabold">File</div>
+            <div><span class="font-semibold">De thi:</span> ${exam.question_file_path}</div>
+            <div><span class="font-semibold">Dap an:</span> ${exam.answer_file_path}</div>
+            <div class="mt-2"><span class="font-semibold">Extract:</span> ${renderExamExtract(exam.answer_extract)}</div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 p-4 space-y-1 text-sm">
+            <div class="font-extrabold">Bai nop lien quan</div>
+            <div>${submissionCount} bai nop da duoc ghi nhan.</div>
+          </div>
         </div>
       `;
     } catch (error) {
@@ -110,20 +132,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       const submissionCount = submissions.filter((item) => String(item.exam_id) === String(exam.id)).length;
       return `
         <tr>
-          <td>${exam.exam_code}</td>
-          <td>v${exam.version}</td>
-          <td>${exam.title}</td>
-          <td>${exam.class_code}</td>
-          <td>${exam.subject_name}</td>
-          <td>${exam.exam_type}</td>
-          <td>${submissionCount}</td>
-          <td>${window.AppUI.renderStatus(exam.status)}</td>
-          <td>${exam.created_at}</td>
-          <td>${exam.teacher_name}</td>
+          <td class="py-2 px-3 font-semibold">${exam.exam_code}</td>
+          <td class="py-2 px-3">v${exam.version}</td>
+          <td class="py-2 px-3">${exam.title}</td>
+          <td class="py-2 px-3">${exam.class_code}</td>
+          <td class="py-2 px-3">${exam.subject_name}</td>
+          <td class="py-2 px-3">${exam.exam_type}</td>
+          <td class="py-2 px-3">${submissionCount}</td>
+          <td class="py-2 px-3">${window.AppUI.renderStatus(exam.status)}</td>
+          <td class="py-2 px-3">${exam.created_at}</td>
+          <td class="py-2 px-3">${exam.teacher_name}</td>
           <td>
-            <div class="table-actions">
-              <button class="secondary" data-view-exam="${exam.id}">Xem</button>
-              <button data-update-exam="${exam.id}">Cap nhat</button>
+            <div class="flex flex-wrap gap-2 py-2 px-3">
+              <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" data-view-exam="${exam.id}">Xem</button>
+              <button class="px-2 py-1 rounded-lg bg-slate-900 text-white text-xs font-semibold" data-update-exam="${exam.id}">Cap nhat</button>
             </div>
           </td>
         </tr>

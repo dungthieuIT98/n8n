@@ -19,29 +19,33 @@ document.addEventListener("DOMContentLoaded", async () => {
       { label: "Ket qua da cong bo", value: publishedCount, hint: "Sinh vien co the tra cuu" },
       { label: "Log loi can xu ly", value: failedCount, hint: "Can retry hoac kiem tra thu cong" }
     ].map((card) => `
-      <article class="summary-card">
-        <span class="muted">${card.label}</span>
-        <strong>${card.value}</strong>
-        <span class="muted">${card.hint}</span>
+      <article class="rounded-2xl border border-slate-200 p-4 bg-white">
+        <div class="text-xs font-semibold text-slate-500">${card.label}</div>
+        <div class="text-3xl font-extrabold mt-2">${card.value}</div>
+        <div class="text-sm text-slate-600 mt-1">${card.hint}</div>
       </article>
     `).join("");
 
-    document.getElementById("recent-exams").innerHTML = exams.slice(0, 3).map((exam) => `
-      <div class="list-card">
-        <strong>${exam.title}</strong>
-        <p>${exam.exam_code} - ${exam.class_code} - ${exam.subject_name}</p>
-        <p>${window.AppUI.renderStatus(exam.status)}</p>
+    document.getElementById("recent-exams").innerHTML = exams.slice(0, 6).map((exam) => `
+      <div class="rounded-2xl border border-slate-200 p-4 bg-white">
+        <div class="font-extrabold">${exam.title}</div>
+        <div class="text-sm text-slate-600 mt-1">${exam.exam_code} - ${exam.class_code} - ${exam.subject_name}</div>
+        <div class="mt-2">${window.AppUI.renderStatus(exam.status)}</div>
       </div>
     `).join("");
 
-    document.getElementById("recent-submissions").innerHTML = submissions.slice(0, 3).map((submission) => `
-      <div class="list-card">
-        <strong>${submission.student_name}</strong>
-        <p>${submission.exam_title}</p>
-        <p>${submission.total_score}/${submission.max_score} - ${window.AppUI.renderStatus(submission.status)}</p>
+    document.getElementById("recent-submissions").innerHTML = submissions.slice(0, 6).map((submission) => `
+      <div class="rounded-2xl border border-slate-200 p-4 bg-white">
+        <div class="font-extrabold">${submission.student_name}</div>
+        <div class="text-sm text-slate-600 mt-1">${submission.exam_title}</div>
+        <div class="text-sm text-slate-700 mt-2">
+          <span class="font-semibold">${submission.total_score}/${submission.max_score}</span>
+          <span class="mx-1 text-slate-400">•</span>
+          ${window.AppUI.renderStatus(submission.status)}
+        </div>
       </div>
     `).join("");
   } catch (error) {
-    document.getElementById("summary-grid").innerHTML = `<div class="message error">${error.message}</div>`;
+    document.getElementById("summary-grid").innerHTML = `<div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">${error.message}</div>`;
   }
 });

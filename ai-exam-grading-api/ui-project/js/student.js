@@ -30,13 +30,15 @@ document.addEventListener("DOMContentLoaded", () => {
     latestResults = results;
     tableBody.innerHTML = results.map((submission) => `
       <tr>
-        <td>${submission.exam_title}</td>
-        <td>${submission.subject_name}</td>
-        <td>${submission.exam_type}</td>
-        <td>${submission.total_score}/${submission.max_score}</td>
-        <td>${window.AppUI.renderStatus(submission.status)}</td>
-        <td>${submission.graded_at || "-"}</td>
-        <td><button class="secondary" data-student-detail="${submission.id}">Xem chi tiet</button></td>
+        <td class="py-2 px-3 font-semibold">${submission.exam_title}</td>
+        <td class="py-2 px-3">${submission.subject_name}</td>
+        <td class="py-2 px-3">${submission.exam_type}</td>
+        <td class="py-2 px-3">${submission.total_score}/${submission.max_score}</td>
+        <td class="py-2 px-3">${window.AppUI.renderStatus(submission.status)}</td>
+        <td class="py-2 px-3">${submission.graded_at || "-"}</td>
+        <td class="py-2 px-3">
+          <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" data-student-detail="${submission.id}">Xem chi tiet</button>
+        </td>
       </tr>
     `).join("") || '<tr><td colspan="7">Khong tim thay ket qua da cong bo.</td></tr>';
 

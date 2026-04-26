@@ -10,7 +10,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   let exams = [];
 
   function renderMessage(type, text) {
-    message.innerHTML = `<div class="message ${type}">${text}</div>`;
+    if (!text) {
+      message.innerHTML = "";
+      return;
+    }
+
+    const map = {
+      success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+      error: "border-red-200 bg-red-50 text-red-800",
+      info: "border-slate-200 bg-slate-50 text-slate-800"
+    };
+    const cls = map[type] || map.info;
+    message.innerHTML = `<div class="rounded-xl border p-3 text-sm ${cls}">${text}</div>`;
   }
 
   function resetExamDetails() {
@@ -19,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("exam-subject").textContent = "-";
     document.getElementById("exam-type").textContent = "-";
     document.getElementById("exam-code").textContent = "-";
-    infoDisplay.style.display = "none";
+    infoDisplay.classList.add("hidden");
   }
 
   // Load exams list
@@ -51,7 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("exam-subject").textContent = selectedExam.subject_name;
         document.getElementById("exam-type").textContent = selectedExam.exam_type;
         document.getElementById("exam-code").textContent = selectedExam.exam_code;
-        infoDisplay.style.display = "block";
+        infoDisplay.classList.remove("hidden");
 
         // Pre-fill class_code from exam if empty
         if (!form.elements.class_code.value) {
@@ -95,7 +106,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     submitButton.disabled = true;
-    renderMessage("", "Dang dua bai lam...");
+    renderMessage("info", "Dang dua bai lam...");
 
     try {
       const selectedExam = exams.find((e) => String(e.id) === String(examSelect.value));

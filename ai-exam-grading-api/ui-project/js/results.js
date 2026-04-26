@@ -35,31 +35,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }).format(date);
   }
 
-  function badgeClass(status) {
-    const map = {
-      published: "text-bg-success",
-      graded: "text-bg-primary",
-      approved: "text-bg-success",
-      ready: "text-bg-success",
-      processing: "text-bg-info",
-      grading: "text-bg-info",
-      uploaded: "text-bg-secondary",
-      extracted: "text-bg-secondary",
-      recheck: "text-bg-warning",
-      warning: "text-bg-warning",
-      failed: "text-bg-danger",
-      rejected: "text-bg-danger"
-    };
-
-    return map[status] || "text-bg-secondary";
-  }
-
   function renderBadge(status, fallback = "-") {
     if (!status) {
-      return `<span class="badge text-bg-light text-secondary">${fallback}</span>`;
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-semibold bg-slate-50 text-slate-700 border-slate-200">${fallback}</span>`;
     }
-
-    return `<span class="badge ${badgeClass(status)}">${status}</span>`;
+    return window.AppUI.renderStatus(status);
   }
 
   function renderSummary(items) {
@@ -73,79 +53,51 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? Math.round(confidenceValues.reduce((sum, value) => sum + value, 0) / confidenceValues.length)
       : 0;
 
-    summaryCards.innerHTML = `
-      <div class="col-12 col-md-6 col-xxl-3">
-        <article class="card h-100 border-0 shadow-sm">
-          <div class="card-body">
-            <div class="text-secondary small text-uppercase fw-semibold mb-2">Tong bai nop</div>
-            <div class="display-6 fw-bold text-dark">${total}</div>
-            <p class="text-secondary small mb-0">So bai nop dang co trong tap du lieu hien tai.</p>
-          </div>
-        </article>
-      </div>
-      <div class="col-12 col-md-6 col-xxl-3">
-        <article class="card h-100 border-0 shadow-sm">
-          <div class="card-body">
-            <div class="text-secondary small text-uppercase fw-semibold mb-2">Da cong bo</div>
-            <div class="display-6 fw-bold text-dark">${published}</div>
-            <p class="text-secondary small mb-0">San sang de sinh vien tra cuu ket qua.</p>
-          </div>
-        </article>
-      </div>
-      <div class="col-12 col-md-6 col-xxl-3">
-        <article class="card h-100 border-0 shadow-sm">
-          <div class="card-body">
-            <div class="text-secondary small text-uppercase fw-semibold mb-2">Can xu ly</div>
-            <div class="display-6 fw-bold text-dark">${needsAttention}</div>
-            <p class="text-secondary small mb-0">Bai dang recheck, failed hoac can giao vien xem lai.</p>
-          </div>
-        </article>
-      </div>
-      <div class="col-12 col-md-6 col-xxl-3">
-        <article class="card h-100 border-0 shadow-sm">
-          <div class="card-body">
-            <div class="text-secondary small text-uppercase fw-semibold mb-2">Do tin cay TB</div>
-            <div class="display-6 fw-bold text-dark">${averageConfidence}%</div>
-            <p class="text-secondary small mb-0">Trung binh confidence AI tren tap ket qua dang hien thi.</p>
-          </div>
-        </article>
-      </div>
-    `;
+    summaryCards.innerHTML = [
+      { label: "Tong bai nop", value: total, hint: "So bai nop dang co trong tap du lieu hien tai." },
+      { label: "Da cong bo", value: published, hint: "San sang de sinh vien tra cuu ket qua." },
+      { label: "Can xu ly", value: needsAttention, hint: "Bai dang recheck, failed hoac can giao vien xem lai." },
+      { label: "Do tin cay TB", value: `${averageConfidence}%`, hint: "Trung binh confidence AI tren tap ket qua dang hien thi." }
+    ].map((card) => `
+      <article class="rounded-2xl border border-slate-200 p-4 bg-white">
+        <div class="text-xs font-semibold text-slate-500">${card.label}</div>
+        <div class="text-3xl font-extrabold mt-2">${card.value}</div>
+        <div class="text-sm text-slate-600 mt-1">${card.hint}</div>
+      </article>
+    `).join("");
   }
 
   function renderFocusCard(submission) {
     if (!submission) {
-      focusCard.innerHTML = '<div class="alert alert-light border mb-0">Chon mot bai nop trong bang de hien thong tin nhanh.</div>';
+      focusCard.innerHTML = '<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Chon mot bai nop trong bang de hien thong tin nhanh.</div>';
       return;
     }
 
     focusCard.innerHTML = `
-      <div class="card bg-body-tertiary border-0 mb-3">
-        <div class="card-body">
-          <div class="d-flex justify-content-between gap-3 align-items-start mb-3">
-            <div>
-              <h4 class="h5 mb-1">${submission.student_name}</h4>
-              <div class="text-secondary small">${submission.student_code} • ${submission.class_code}</div>
-            </div>
-            ${renderBadge(submission.status)}
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <div class="font-extrabold">${submission.student_name}</div>
+            <div class="text-sm text-slate-600">${submission.student_code} • ${submission.class_code}</div>
           </div>
-          <div class="row g-2 small">
-            <div class="col-6"><span class="text-secondary d-block">Mon hoc</span><strong>${submission.subject_name || "-"}</strong></div>
-            <div class="col-6"><span class="text-secondary d-block">Loai bai</span><strong>${submission.exam_type || "-"}</strong></div>
-            <div class="col-6"><span class="text-secondary d-block">Tong diem</span><strong>${submission.total_score || 0}/${submission.max_score || "-"}</strong></div>
-            <div class="col-6"><span class="text-secondary d-block">AI confidence</span><strong>${submission.ai_confidence ? `${submission.ai_confidence}%` : "-"}</strong></div>
-          </div>
+          ${renderBadge(submission.status)}
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div><div class="text-xs font-semibold text-slate-500">Mon hoc</div><div class="font-semibold">${submission.subject_name || "-"}</div></div>
+          <div><div class="text-xs font-semibold text-slate-500">Loai bai</div><div class="font-semibold">${submission.exam_type || "-"}</div></div>
+          <div><div class="text-xs font-semibold text-slate-500">Tong diem</div><div class="font-semibold">${submission.total_score || 0}/${submission.max_score || "-"}</div></div>
+          <div><div class="text-xs font-semibold text-slate-500">AI confidence</div><div class="font-semibold">${submission.ai_confidence ? `${submission.ai_confidence}%` : "-"}</div></div>
         </div>
       </div>
-      <ul class="list-group list-group-flush border rounded-4 overflow-hidden mb-3">
-        <li class="list-group-item d-flex justify-content-between gap-3"><span class="text-secondary">De thi</span><strong class="text-end">${submission.exam_title || submission.exam_code || "-"}</strong></li>
-        <li class="list-group-item d-flex justify-content-between gap-3"><span class="text-secondary">Phe duyet</span><span>${renderBadge(submission.review_status, "chua co")}</span></li>
-        <li class="list-group-item d-flex justify-content-between gap-3"><span class="text-secondary">Nop bai</span><strong class="text-end">${formatDateTime(submission.submitted_at)}</strong></li>
-        <li class="list-group-item d-flex justify-content-between gap-3"><span class="text-secondary">Cham xong</span><strong class="text-end">${formatDateTime(submission.graded_at)}</strong></li>
-      </ul>
-      <div class="d-grid gap-2 d-sm-flex">
-        <button class="btn btn-outline-primary" type="button" data-view-submission="${submission.id}">Xem chi tiet</button>
-        <button class="btn btn-outline-secondary" type="button" data-download-submission="${submission.id}">Tai bai</button>
+      <div class="rounded-2xl border border-slate-200 overflow-hidden mb-3 text-sm">
+        <div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200"><span class="text-slate-600">De thi</span><span class="font-semibold text-right">${submission.exam_title || submission.exam_code || "-"}</span></div>
+        <div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200"><span class="text-slate-600">Phe duyet</span><span>${renderBadge(submission.review_status, "chua co")}</span></div>
+        <div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200"><span class="text-slate-600">Nop bai</span><span class="font-semibold text-right">${formatDateTime(submission.submitted_at)}</span></div>
+        <div class="flex items-center justify-between gap-3 px-3 py-2"><span class="text-slate-600">Cham xong</span><span class="font-semibold text-right">${formatDateTime(submission.graded_at)}</span></div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" type="button" data-view-submission="${submission.id}">Xem chi tiet</button>
+        <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" type="button" data-download-submission="${submission.id}">Tai bai</button>
       </div>
     `;
   }
@@ -267,21 +219,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       : "Khong co bai nop phu hop voi bo loc hien tai.";
 
     const rows = currentFilteredRows.map((submission) => `
-      <tr class="result-row ${String(submission.id) === String(selectedSubmissionId) ? "table-active" : ""}" data-select-submission="${submission.id}">
+      <tr class="${String(submission.id) === String(selectedSubmissionId) ? "bg-slate-50" : ""} cursor-pointer" data-select-submission="${submission.id}">
         <td>
-          <div class="fw-semibold">${submission.student_code}</div>
-          <div class="text-secondary small">${submission.exam_code || "-"}</div>
+          <div class="font-semibold">${submission.student_code}</div>
+          <div class="text-slate-500 text-xs">${submission.exam_code || "-"}</div>
         </td>
         <td>
-          <div class="fw-semibold">${submission.student_name}</div>
-          <div class="text-secondary small">${submission.exam_title || "-"}</div>
+          <div class="font-semibold">${submission.student_name}</div>
+          <div class="text-slate-500 text-xs">${submission.exam_title || "-"}</div>
         </td>
         <td>${submission.class_code}</td>
         <td>${submission.subject_name}</td>
         <td>${submission.exam_type}</td>
-        <td><span class="fw-semibold">${submission.total_score}/${submission.max_score}</span></td>
+        <td><span class="font-semibold">${submission.total_score}/${submission.max_score}</span></td>
         <td>
-          <div class="d-flex flex-column gap-1">
+          <div class="flex flex-col gap-1">
             ${renderBadge(submission.status)}
             ${submission.review_status ? renderBadge(submission.review_status) : ""}
           </div>
@@ -290,17 +242,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td>${formatDateTime(submission.submitted_at)}</td>
         <td>${formatDateTime(submission.graded_at)}</td>
         <td>
-          <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-sm btn-outline-primary" type="button" data-view-submission="${submission.id}">Xem</button>
-            <button class="btn btn-sm btn-outline-secondary" type="button" data-download-submission="${submission.id}">Tai bai</button>
-            <button class="btn btn-sm btn-outline-warning" type="button" data-regrade-submission="${submission.id}">Cham lai</button>
-            <button class="btn btn-sm btn-success" type="button" data-approve-submission="${submission.id}">Phe duyet</button>
+          <div class="flex flex-wrap gap-2">
+            <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" type="button" data-view-submission="${submission.id}">Xem</button>
+            <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" type="button" data-download-submission="${submission.id}">Tai bai</button>
+            <button class="px-2 py-1 rounded-lg border border-amber-200 text-amber-800 hover:bg-amber-50 text-xs font-semibold" type="button" data-regrade-submission="${submission.id}">Cham lai</button>
+            <button class="px-2 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold" type="button" data-approve-submission="${submission.id}">Phe duyet</button>
           </div>
         </td>
       </tr>
     `).join("");
 
-    document.getElementById("result-table-body").innerHTML = rows || '<tr><td colspan="11" class="text-center text-secondary py-4">Khong co ket qua phu hop bo loc.</td></tr>';
+    document.getElementById("result-table-body").innerHTML = rows || '<tr><td colspan="11" class="py-4 px-3 text-center text-slate-600">Khong co ket qua phu hop bo loc.</td></tr>';
 
     document.querySelectorAll("[data-select-submission]").forEach((row) => {
       row.addEventListener("click", (event) => {

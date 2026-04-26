@@ -15,100 +15,44 @@
 
   function openModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    document.body.style.overflow = "hidden";
   }
 
   function closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.remove("open");
-      document.body.style.overflow = "";
-    }
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    document.body.style.overflow = "";
   }
 
-  function decorateButtons(root) {
-    root.querySelectorAll("button, .button-link").forEach((element) => {
-      element.classList.add("btn");
+  function renderNav(page) {
+    const nav = document.getElementById("nav");
+    if (!nav) return;
 
-      if (element.classList.contains("secondary")) {
-        element.classList.add("btn-outline-secondary");
-        return;
-      }
+    const currentTeacher = window.AppState.getCurrentTeacher();
+    const navItems = currentTeacher ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
-      if (element.classList.contains("warning")) {
-        element.classList.add("btn-warning");
-        return;
-      }
-
-      if (element.classList.contains("danger")) {
-        element.classList.add("btn-danger");
-        return;
-      }
-
-      if (element.classList.contains("ghost")) {
-        element.classList.add("btn-light");
-        return;
-      }
-
-      element.classList.add("btn-primary");
-    });
-  }
-
-  function decorateForms(root) {
-    root.querySelectorAll("input:not([type='file']):not([type='checkbox']):not([type='radio']), textarea").forEach((element) => {
-      element.classList.add("form-control");
-    });
-
-    root.querySelectorAll("select").forEach((element) => {
-      element.classList.add("form-select");
-    });
-
-    root.querySelectorAll("input[type='file']").forEach((element) => {
-      element.classList.add("form-control");
-    });
-  }
-
-  function decorateTables(root) {
-    root.querySelectorAll("table").forEach((table) => {
-      table.classList.add("table", "table-hover", "align-middle", "mb-0");
-    });
-
-    root.querySelectorAll(".table-wrapper").forEach((wrapper) => {
-      wrapper.classList.add("table-responsive");
-    });
-  }
-
-  function decorateCards(root) {
-    root.querySelectorAll(".panel, .detail-card, .summary-card, .login-card, .auth-side-card, .auth-card, .section, .hero").forEach((element) => {
-      element.classList.add("card", "border-0");
-    });
-  }
-
-  function applyBootstrapClasses() {
-    const root = document.body;
-    decorateButtons(root);
-    decorateForms(root);
-    decorateTables(root);
-    decorateCards(root);
+    nav.innerHTML = navItems.map((item) => {
+      const isActive = item.id === page;
+      return `
+        <a
+          href="${item.href}"
+          class="block px-3 py-2 rounded-lg text-sm font-semibold ${isActive ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"}"
+        >
+          ${item.label}
+        </a>
+      `;
+    }).join("");
   }
 
   function init() {
     const page = document.body.dataset.page;
     window.AppState.ensurePageAccess(page);
-    const nav = document.getElementById("nav");
-    if (nav) {
-      const currentTeacher = window.AppState.getCurrentTeacher();
-      const navItems = currentTeacher ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS;
-
-      nav.innerHTML = navItems.map((item) => (
-        `<a href="${item.href}" class="nav-link ${item.id === page ? "active" : ""}">${item.label}</a>`
-      )).join("");
-    }
-
-    nav?.classList.add("nav-pills", "flex-column");
+    renderNav(page);
 
     const currentTeacher = window.AppState.getCurrentTeacher();
     const userLabel = document.getElementById("current-user-label");
@@ -134,8 +78,6 @@
       });
     });
 
-    applyBootstrapClasses();
-
     // Modal close handlers
     document.querySelectorAll("[data-close-modal]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -145,9 +87,9 @@
     });
 
     // Close modal when clicking overlay
-    document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+    document.querySelectorAll("[data-modal-overlay]").forEach((overlay) => {
       overlay.addEventListener("click", () => {
-        const modal = overlay.closest(".modal");
+        const modal = overlay.closest("[data-modal]");
         if (modal) {
           closeModal(modal.id);
         }
@@ -157,11 +99,10 @@
     // Close modal on ESC key
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        const openModals = document.querySelectorAll(".modal.open");
-        if (openModals.length > 0) {
-          const lastModal = openModals[openModals.length - 1];
-          closeModal(lastModal.id);
-        }
+        const openModals = Array.from(document.querySelectorAll("[data-modal]")).filter((m) => !m.classList.contains("hidden"));
+        if (openModals.length === 0) return;
+        const lastModal = openModals[openModals.length - 1];
+        closeModal(lastModal.id);
       }
     });
   }

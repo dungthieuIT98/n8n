@@ -91,50 +91,109 @@
   }
 
   function renderStatus(status) {
-    return `<span class="status ${status}">${status}</span>`;
+    const s = String(status || "").toLowerCase();
+    const map = {
+      published: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      success: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      ready: "bg-emerald-50 text-emerald-700 border-emerald-200",
+
+      processing: "bg-sky-50 text-sky-700 border-sky-200",
+      running: "bg-sky-50 text-sky-700 border-sky-200",
+      extracting: "bg-sky-50 text-sky-700 border-sky-200",
+      grading: "bg-sky-50 text-sky-700 border-sky-200",
+
+      uploaded: "bg-slate-50 text-slate-700 border-slate-200",
+      extracted: "bg-slate-50 text-slate-700 border-slate-200",
+      graded: "bg-slate-50 text-slate-700 border-slate-200",
+      queued: "bg-slate-50 text-slate-700 border-slate-200",
+      draft: "bg-slate-50 text-slate-700 border-slate-200",
+      archived: "bg-slate-50 text-slate-700 border-slate-200",
+
+      warning: "bg-amber-50 text-amber-800 border-amber-200",
+      recheck: "bg-amber-50 text-amber-800 border-amber-200",
+
+      failed: "bg-red-50 text-red-700 border-red-200",
+      rejected: "bg-red-50 text-red-700 border-red-200"
+    };
+
+    const cls = map[s] || "bg-slate-50 text-slate-700 border-slate-200";
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-semibold ${cls}">${status}</span>`;
   }
 
   function renderQuestionList(questions) {
     if (!questions || !questions.length) {
-      return `<div class="list-card">Chua co du lieu cau hoi vi bai nop dang loi hoac chua extract xong.</div>`;
+      return `<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Chua co du lieu cau hoi vi bai nop dang loi hoac chua extract xong.</div>`;
     }
 
     return questions.map((item) => `
-      <div class="question-item">
-        <h4>Cau ${item.no} ${renderStatus(item.result === "Dung" ? "approved" : "failed")}</h4>
-        <p><strong>De bai:</strong> ${item.question}</p>
-        <p><strong>Tra loi:</strong> ${item.student_answer}</p>
-        <p><strong>Dap an dung:</strong> ${item.correct_answer}</p>
-        <p><strong>Diem:</strong> ${item.score}</p>
-        <p><strong>Giai thich:</strong> ${item.explanation}</p>
+      <div class="rounded-xl border border-slate-200 p-4 space-y-2">
+        <div class="flex items-center justify-between gap-3">
+          <div class="font-extrabold">Cau ${item.no}</div>
+          <div>${renderStatus(item.result === "Dung" ? "approved" : "failed")}</div>
+        </div>
+        <div class="text-sm space-y-1">
+          <div><span class="font-semibold">De bai:</span> ${item.question}</div>
+          <div><span class="font-semibold">Tra loi:</span> ${item.student_answer}</div>
+          <div><span class="font-semibold">Dap an dung:</span> ${item.correct_answer}</div>
+          <div><span class="font-semibold">Diem:</span> ${item.score}</div>
+          <div><span class="font-semibold">Giai thich:</span> ${item.explanation}</div>
+        </div>
       </div>
     `).join("");
   }
 
   function renderSubmissionDetail(submission) {
     if (!submission) {
-      return "<h3>Chi tiet bai lam</h3><p>Khong tim thay bai nop.</p>";
+      return '<div class="text-sm text-slate-700">Khong tim thay bai nop.</div>';
     }
 
     return `
-      <h3>${submission.student_name} - ${submission.exam_title}</h3>
-      <div class="detail-meta">
-        <div><strong>student_code</strong><br>${submission.student_code}</div>
-        <div><strong>Lop</strong><br>${submission.class_code}</div>
-        <div><strong>Mon hoc</strong><br>${submission.subject_name}</div>
-        <div><strong>Loai bai thi</strong><br>${submission.exam_type}</div>
-        <div><strong>Diem tong</strong><br>${submission.total_score}/${submission.max_score}</div>
-        <div><strong>AI confidence</strong><br>${submission.ai_confidence ? `${submission.ai_confidence}%` : "-"}</div>
-        <div><strong>Trang thai</strong><br>${renderStatus(submission.status)}</div>
-        <div><strong>Phe duyet</strong><br>${renderStatus(submission.review_status)}</div>
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="text-xs font-semibold text-slate-500">student_code</div>
+            <div class="font-bold">${submission.student_code}</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="text-xs font-semibold text-slate-500">Lop</div>
+            <div class="font-bold">${submission.class_code}</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="text-xs font-semibold text-slate-500">Mon hoc</div>
+            <div class="font-bold">${submission.subject_name}</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="text-xs font-semibold text-slate-500">Loai bai thi</div>
+            <div class="font-bold">${submission.exam_type}</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="text-xs font-semibold text-slate-500">Diem tong</div>
+            <div class="font-bold">${submission.total_score}/${submission.max_score}</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="text-xs font-semibold text-slate-500">AI confidence</div>
+            <div class="font-bold">${submission.ai_confidence ? `${submission.ai_confidence}%` : "-"}</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="text-xs font-semibold text-slate-500">Trang thai</div>
+            <div>${renderStatus(submission.status)}</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="text-xs font-semibold text-slate-500">Phe duyet</div>
+            <div>${submission.review_status ? renderStatus(submission.review_status) : "-"}</div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 p-4 text-sm space-y-2">
+          <div><span class="font-semibold">De thi:</span> ${submission.exam_code || "-"}</div>
+          <div><span class="font-semibold">File bai nop:</span> ${submission.submission_file_path || "-"}</div>
+          <div><span class="font-semibold">Ket qua JSON:</span> ${submission.grading_result_file_path || "-"}</div>
+          <div><span class="font-semibold">Ghi chu:</span> ${submission.notes || "Khong co"}</div>
+        </div>
+
+        <div class="space-y-3">${renderQuestionList(submission.questions || [])}</div>
       </div>
-      <div class="list-card">
-        <p><strong>De thi:</strong> ${submission.exam_code || "-"}</p>
-        <p><strong>File bai nop:</strong> ${submission.submission_file_path || "-"}</p>
-        <p><strong>Ket qua JSON:</strong> ${submission.grading_result_file_path || "-"}</p>
-        <p><strong>Ghi chu:</strong> ${submission.notes || "Khong co"}</p>
-      </div>
-      <div class="question-list" style="margin-top: 14px;">${renderQuestionList(submission.questions || [])}</div>
     `;
   }
 
