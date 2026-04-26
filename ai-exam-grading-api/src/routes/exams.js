@@ -7,7 +7,7 @@ const { URL } = require('node:url');
 
 const config = require('../config');
 const { query, queryEntityDetail } = require('../database');
-const { parseId, requireAuth } = require('../helpers');
+const { parseId, requireAuth, decorateSubmission } = require('../helpers');
 
 const router = express.Router();
 
@@ -289,6 +289,249 @@ router.post('/:id/reprocess', requireAuth, async (request, response, next) => {
 
     const detail = await queryEntityDetail('exams', exam.id);
     response.json({ ok: true, data: detail });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /api/exams/:id - Update exam
+router.put('/:id', requireAuth, async (request, response, next) => {
+  try {
+    const examId = parseId(request.params.id);
+    if (!examId) {
+      response.status(400).json({ ok: false, message: 'Invalid exam id' });
+      return;
+    }
+
+    const updateResult = await query(`
+      UPDATE exams
+      SET title = COALESCE($2, title),
+          description = COALESCE($3, description),
+          class_code = COALESCE($4, class_code),
+          subject_code = COALESCE($5, subject_code),
+          subject_name = COALESCE($6, subject_name),
+          exam_type = COALESCE($7, exam_type),
+          exam_round = COALESCE($8, exam_round),
+          updated_at = NOW(),
+          updated_by = $9
+      WHERE id = $1 AND teacher_id = $9
+      RETURNING id
+    `, [
+      examId,
+      request.body.title || null,
+      request.body.description || null,
+      request.body.class_code || null,
+      request.body.subject_code || null,
+      request.body.subject_name || null,
+      request.body.exam_type || null,
+      request.body.exam_round || null,
+      request.session.teacher.id
+    ]);
+
+    if (updateResult.rowCount === 0) {
+      response.status(404).json({ ok: false, message: 'Exam not found or unauthorized' });
+      return;
+    }
+
+    const detail = await queryEntityDetail('exams', examId);
+    response.json({ ok: true, data: detail });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/exams/:id - Soft delete exam
+router.delete('/:id', requireAuth, async (request, response, next) => {
+  try {
+    const examId = parseId(request.params.id);
+    if (!examId) {
+      response.status(400).json({ ok: false, message: 'Invalid exam id' });
+      return;
+    }
+
+    const updateResult = await query(`
+      UPDATE exams
+      SET status = 'archived',
+          updated_at = NOW(),
+          updated_by = $2
+      WHERE id = $1 AND teacher_id = $2
+      RETURNING id
+    `, [examId, request.session.teacher.id]);
+
+    if (updateResult.rowCount === 0) {
+      response.status(404).json({ ok: false, message: 'Exam not found or unauthorized' });
+      return;
+    }
+
+    response.json({ ok: true, message: 'Exam archived successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /api/exams/:id/status - Change exam status (activate/deactivate)
+router.patch('/:id/status', requireAuth, async (request, response, next) => {
+  try {
+    const examId = parseId(request.params.id);
+    const newStatus = request.body.status;
+
+    if (!examId) {
+      response.status(400).json({ ok: false, message: 'Invalid exam id' });
+      return;
+    }
+
+    if (!['draft', 'ready', 'active', 'archived'].includes(newStatus)) {
+      response.status(400).json({ ok: false, message: 'Invalid status. Must be: draft, ready, active, archived' });
+      return;
+    }
+
+    const updateResult = await query(`
+      UPDATE exams
+      SET status = $2,
+          updated_at = NOW(),
+          updated_by = $3
+      WHERE id = $1 AND teacher_id = $3
+      RETURNING id
+    `, [examId, newStatus, request.session.teacher.id]);
+
+    if (updateResult.rowCount === 0) {
+      response.status(404).json({ ok: false, message: 'Exam not found or unauthorized' });
+      return;
+    }
+
+    const detail = await queryEntityDetail('exams', examId);
+    response.json({ ok: true, data: detail });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/exams/:id/submissions - Get all submissions for an exam
+router.get('/:id/submissions', requireAuth, async (request, response, next) => {
+  try {
+    const examId = parseId(request.params.id);
+    if (!examId) {
+      response.status(400).json({ ok: false, message: 'Invalid exam id' });
+      return;
+    }
+
+    // Verify exam belongs to teacher
+    const examCheck = await query(`
+      SELECT id FROM exams WHERE id = $1 AND teacher_id = $2
+    `, [examId, request.session.teacher.id]);
+
+    if (examCheck.rowCount === 0) {
+      response.status(404).json({ ok: false, message: 'Exam not found or unauthorized' });
+      return;
+    }
+
+    const result = await query(`
+      SELECT
+        s.id,
+        s.exam_id,
+        e.exam_code,
+        e.title AS exam_title,
+        e.subject_name,
+        e.exam_type,
+        s.student_code,
+        s.student_name,
+        s.class_code,
+        s.subject_code,
+        s.submission_file_path,
+        s.submission_extract,
+        s.submitted_at,
+        s.status,
+        s.created_at,
+        s.updated_at,
+        gr.id AS grading_result_id,
+        gr.total_score,
+        gr.max_score,
+        gr.ai_confidence,
+        gr.grading_detail,
+        gr.general_feedback,
+        gr.notes,
+        gr.graded_at,
+        gr.review_status,
+        gr.published_at,
+        gr.reviewed_by,
+        gr.reviewed_at,
+        gr.grading_type,
+        gr.grading_attempt,
+        gr.status AS grading_status
+      FROM submissions s
+      LEFT JOIN exams e ON e.id = s.exam_id
+      LEFT JOIN LATERAL (
+        SELECT id, total_score, max_score, ai_confidence, grading_detail, general_feedback, notes,
+               graded_at, review_status, published_at, reviewed_by, reviewed_at, grading_type, grading_attempt, status
+        FROM grading_results
+        WHERE submission_id = s.id
+        ORDER BY grading_attempt DESC
+        LIMIT 1
+      ) gr ON true
+      WHERE s.exam_id = $1
+      ORDER BY s.submitted_at DESC NULLS LAST, s.id DESC
+    `, [examId]);
+
+    response.json({
+      ok: true,
+      exam_id: examId,
+      data: result.rows.map(decorateSubmission)
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/exams/:id/students - Get unique list of students who submitted for an exam
+router.get('/:id/students', requireAuth, async (request, response, next) => {
+  try {
+    const examId = parseId(request.params.id);
+    if (!examId) {
+      response.status(400).json({ ok: false, message: 'Invalid exam id' });
+      return;
+    }
+
+    // Verify exam belongs to teacher
+    const examCheck = await query(`
+      SELECT id, exam_code, title FROM exams WHERE id = $1 AND teacher_id = $2
+    `, [examId, request.session.teacher.id]);
+
+    if (examCheck.rowCount === 0) {
+      response.status(404).json({ ok: false, message: 'Exam not found or unauthorized' });
+      return;
+    }
+
+    const result = await query(`
+      SELECT
+        s.student_code,
+        s.student_name,
+        s.class_code,
+        s.subject_code,
+        COUNT(s.id) AS submission_count,
+        MAX(s.submitted_at) AS last_submitted_at,
+        MAX(gr.total_score) AS best_score,
+        MAX(gr.max_score) AS max_score,
+        MAX(CASE WHEN gr.status = 'published' THEN gr.total_score ELSE NULL END) AS published_score
+      FROM submissions s
+      LEFT JOIN LATERAL (
+        SELECT total_score, max_score, status
+        FROM grading_results
+        WHERE submission_id = s.id
+        ORDER BY grading_attempt DESC
+        LIMIT 1
+      ) gr ON true
+      WHERE s.exam_id = $1
+      GROUP BY s.student_code, s.student_name, s.class_code, s.subject_code
+      ORDER BY s.student_code
+    `, [examId]);
+
+    response.json({
+      ok: true,
+      exam_id: examId,
+      exam_code: examCheck.rows[0].exam_code,
+      exam_title: examCheck.rows[0].title,
+      data: result.rows
+    });
   } catch (error) {
     next(error);
   }

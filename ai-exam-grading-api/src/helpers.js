@@ -64,9 +64,9 @@ function decorateSubmission(row) {
     return null;
   }
 
-  return Object.assign({}, row, {
-    questions: makeQuestionList(row)
-  });
+  // Extract questions from grading_detail if available
+  const questions = row.grading_detail?.graded_questions || makeQuestionList(row);
+  return Object.assign({}, row, { questions });
 }
 
 function createAuthToken(teacher) {

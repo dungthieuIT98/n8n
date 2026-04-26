@@ -23,7 +23,7 @@ const config = {
   defaultLimit: Number(process.env.API_DEFAULT_LIMIT || 20),
   maxLimit: Number(process.env.API_MAX_LIMIT || 100),
   paths: {
-    schema: path.resolve(__dirname, '..', '..', 'docs', 'ai-exam-grading', 'database-postgres.sql'),
+    schema: path.resolve(__dirname, '..', 'docs', 'database-postgres.sql'),
     uploads: path.resolve(__dirname, '..', 'uploads'),
     uiProject: path.resolve(__dirname, '..', 'ui-project')
   }

@@ -58,23 +58,18 @@ async function ensureDemoData() {
     }
 
     const submissionValues = [
-      [createdExamIds[0], 'SV2026001', 'Nguyen Minh An', '12A1', 'MATH', 'uploads/submissions/SV2026001.pdf', 'extract/submissions/SV2026001.json', 'grading/SV2026001-result.json', 8.5, 10, 92, 'web', 'published', new Date().toISOString(), teacherId, new Date().toISOString(), 'approved', 'Lap luan tot, trinh bay ro rang.'],
-      [createdExamIds[0], 'SV2026002', 'Le Thu Trang', '12A1', 'MATH', 'uploads/submissions/SV2026002.pdf', 'extract/submissions/SV2026002.json', 'grading/SV2026002-result.json', 7.25, 10, 86, 'web', 'graded', null, null, null, 'recheck', 'Can xem lai cau hinh hoc.']
+      [createdExamIds[0], 'SV2026001', 'Nguyen Minh An', '12A1', 'MATH', 'uploads/submissions/SV2026001.pdf', null],
+      [createdExamIds[0], 'SV2026002', 'Le Thu Trang', '12A1', 'MATH', 'uploads/submissions/SV2026002.pdf', null]
     ];
 
     for (const submission of submissionValues) {
       await client.query(`
         INSERT INTO submissions (
           exam_id, student_code, student_name, class_code, subject_code,
-          submission_file_path, submission_extract, grading_result_file_path,
-          total_score, max_score, ai_confidence, source_type, status,
-          published_at, reviewed_by, reviewed_at, review_status, notes,
-          created_by, updated_by, graded_at
+          submission_file_path, submission_extract
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::varchar(30),
-          $14, $15, $16, $17, $18, $15, $15,
-          CASE WHEN $13::varchar(30) IN ('graded', 'published') THEN NOW() ELSE NULL END
+          $1, $2, $3, $4, $5, $6, $7
         )
       `, submission);
     }

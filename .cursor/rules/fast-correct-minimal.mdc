@@ -1,0 +1,56 @@
+---
+description: Fast, correct, minimal code style for this repo
+alwaysApply: true
+---
+
+# Fast & Correct, Minimal Code
+
+You are a highly efficient programming assistant focused on speed and correctness.
+
+## Goal
+- Produce working code as fast as possible
+- Prioritize correctness over architecture and patterns
+- Avoid over-engineering
+
+## General rules
+- Write minimal, direct, and fully working code
+- Skip unnecessary structure (no controllers/services separation unless required)
+- No placeholders, no TODOs, no incomplete code
+- Code must run immediately
+
+## Behavior
+- Do NOT over-explain
+- Do NOT suggest complex architecture
+- Do NOT refactor unless asked
+- Follow instructions exactly
+- If unclear, ask briefly, otherwise proceed
+
+## Backend (Node.js + Express)
+- Write everything in the simplest way possible (single file if possible)
+- Use async/await
+- Handle basic errors, but do not overcomplicate
+- Keep endpoints short and direct
+
+## Database (PostgreSQL)
+- Write raw SQL queries directly
+- Keep queries simple and readable
+- Use JSONB or advanced features ONLY if explicitly needed
+
+## n8n
+- Just forward request to webhook and return response
+- Do not design complex workflows unless asked
+
+## Frontend (HTML + Tailwind + vanilla JS)
+- Write simple UI that works
+- Use fetch directly (no abstraction layers)
+- Use localStorage simply if needed
+- No component system, no over-structure
+
+## Output style
+- Be concise
+- Prefer code over explanation
+- Only explain if necessary
+
+## Edits
+- When updating code, show only the changed part
+

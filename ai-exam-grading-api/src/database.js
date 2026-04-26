@@ -26,7 +26,7 @@ const ENTITY_CONFIG = {
       'e.id', 'e.exam_code', 'e.version', 'e.title', 'e.description',
       'e.class_code', 'e.subject_code', 'e.subject_name', 'e.exam_type', 'e.exam_round',
       'e.teacher_id', 't.full_name AS teacher_name', 'e.question_file_path',
-      'e.answer_file_path', 'e.answer_extract', 'e.status',
+      'e.answer_file_path', 'e.answer_extract', 'e.answer_extract_file_path', 'e.status',
       'e.created_at', 'e.updated_at'
     ],
     joins: ['LEFT JOIN teachers t ON t.id = e.teacher_id']
@@ -36,29 +36,59 @@ const ENTITY_CONFIG = {
     alias: 's',
     orderBy: 's.submitted_at DESC, s.id DESC',
     searchColumns: ['s.student_code', 's.student_name', 's.class_code', 's.subject_code', 'e.exam_code', 'e.title'],
-    filterColumns: ['status', 'review_status', 'exam_id', 'class_code', 'student_code', 'student_name', 'subject_code'],
+    filterColumns: [
+      'status',
+      'exam_id',
+      'class_code',
+      'student_code',
+      'student_name',
+      'subject_code',
+      { name: 'teacher_id', column: 'e.teacher_id' }
+    ],
     select: [
       's.id', 's.exam_id', 'e.exam_code', 'e.title AS exam_title', 'e.subject_name', 'e.exam_type',
-      's.student_code', 's.student_name', 's.class_code', 's.subject_code',
-      's.submission_file_path', 's.submission_extract', 's.grading_result_file_path',
-      's.total_score', 's.max_score', 's.ai_confidence', 's.submitted_at', 's.graded_at',
-      's.status', 's.review_status', 's.notes', 's.published_at',
-      's.reviewed_by', 's.reviewed_at', 's.created_at', 's.updated_at'
+      'e.teacher_id', 's.student_code', 's.student_name', 's.class_code', 's.subject_code',
+      's.submission_file_path', 's.submission_extract', 's.submitted_at',
+      's.status', 's.created_at', 's.updated_at',
+      'gr.id AS grading_result_id', 'gr.total_score', 'gr.max_score', 'gr.ai_confidence',
+      'gr.grading_detail', 'gr.general_feedback', 'gr.notes', 'gr.graded_at',
+      'gr.review_status', 'gr.published_at', 'gr.reviewed_by', 'gr.reviewed_at',
+      'gr.grading_type', 'gr.grading_attempt', 'gr.status AS grading_status'
     ],
-    joins: ['LEFT JOIN exams e ON e.id = s.exam_id']
+    joins: [
+      'LEFT JOIN exams e ON e.id = s.exam_id',
+      'LEFT JOIN LATERAL (SELECT id, total_score, max_score, ai_confidence, grading_detail, general_feedback, notes, graded_at, review_status, published_at, reviewed_by, reviewed_at, grading_type, grading_attempt, status FROM grading_results WHERE submission_id = s.id ORDER BY grading_attempt DESC LIMIT 1) gr ON true'
+    ]
+  },
+  grading_results: {
+    table: 'grading_results',
+    alias: 'gr',
+    orderBy: 'gr.graded_at DESC, gr.id DESC',
+    searchColumns: ['gr.student_code', 'gr.student_name', 'gr.class_code', 'gr.exam_code', 'gr.exam_title'],
+    filterColumns: ['status', 'review_status', 'exam_id', 'submission_id', 'student_code', 'class_code', 'grading_type'],
+    select: [
+      'gr.id', 'gr.submission_id', 'gr.exam_id', 'gr.exam_code', 'gr.exam_title',
+      'gr.class_code', 'gr.subject_code', 'gr.student_code', 'gr.student_name',
+      'gr.grading_attempt', 'gr.grading_type', 'gr.total_score', 'gr.max_score',
+      'gr.ai_confidence', 'gr.grading_detail', 'gr.general_feedback', 'gr.notes',
+      'gr.graded_by', 'gr.graded_by_name', 'gr.graded_at',
+      'gr.reviewed_by', 'gr.reviewed_at', 'gr.review_status', 'gr.review_notes',
+      'gr.status', 'gr.error_message', 'gr.published_at',
+      'gr.created_at', 'gr.updated_at'
+    ]
   },
   system_logs: {
     table: 'system_logs',
     alias: 'l',
     orderBy: 'l.created_at DESC, l.id DESC',
     searchColumns: ['l.student_code', 'l.student_name', 'l.class_code', 'l.workflow_execution_id', 'l.model_name', 'l.message', 'l.error_message'],
-    filterColumns: ['status', 'log_type', 'ref_table', 'exam_id', 'submission_id', 'student_code', 'class_code'],
+    filterColumns: ['status', 'log_type', 'ref_table', 'exam_id', 'submission_id', 'student_code', 'class_code', 'created_by'],
     select: [
-      'l.id', 'l.log_type', 'l.ref_table', 'l.ref_id', 'l.exam_id', 'e.exam_code',
+      'l.id', 'l.log_type', 'l.ref_table', 'l.ref_id', 'l.exam_id', 'e.exam_code', 'e.teacher_id',
       'l.submission_id', 's.student_name AS submission_student_name', 'l.student_code',
       'l.student_name', 'l.class_code', 'l.workflow_execution_id', 'l.model_name',
       'l.status', 'l.message', 'l.request_payload', 'l.response_payload',
-      'l.error_message', 'l.created_at', 'l.updated_at'
+      'l.error_message', 'l.created_at', 'l.updated_at', 'l.created_by'
     ],
     joins: [
       'LEFT JOIN exams e ON e.id = l.exam_id',
@@ -97,14 +127,23 @@ function buildFilters(entity, queryParams, startingIndex = 1) {
     parameterIndex += 1;
   }
 
-  for (const filterName of entity.filterColumns) {
-    const filterValue = queryParams[filterName];
+  const filters = (entity.filterColumns || []).map((entry) => {
+    if (typeof entry === 'string') {
+      return { name: entry, column: `${entity.alias}.${entry}` };
+    }
+    if (entry && typeof entry === 'object' && entry.name && entry.column) {
+      return { name: entry.name, column: entry.column };
+    }
+    return null;
+  }).filter(Boolean);
+
+  for (const filter of filters) {
+    const filterValue = queryParams[filter.name];
     if (filterValue === undefined || filterValue === null || filterValue === '') {
       continue;
     }
 
-    const columnName = `${entity.alias}.${filterName}`;
-    where.push(`${columnName} = $${parameterIndex}`);
+    where.push(`${filter.column} = $${parameterIndex}`);
     values.push(filterValue);
     parameterIndex += 1;
   }
