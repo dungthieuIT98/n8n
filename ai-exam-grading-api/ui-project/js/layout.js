@@ -4,7 +4,8 @@
     { id: "upload", href: "upload.html", label: "Upload de thi" },
     { id: "exams", href: "exams.html", label: "Quan ly de thi" },
     { id: "results", href: "results.html", label: "Ket qua cham" },
-    { id: "logs", href: "logs.html", label: "Log he thong" }
+    { id: "logs", href: "logs.html", label: "Log he thong" },
+    { id: "admin", href: "admin.html", label: "Admin (Lop/Mon/Dot)" }
   ];
 
   const PUBLIC_NAV_ITEMS = [
