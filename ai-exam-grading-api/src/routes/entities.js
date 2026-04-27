@@ -91,7 +91,7 @@ router.post('/classes', requireAuth, async (request, response, next) => {
     if (!class_code) {
       response.status(400).json({ ok: false, message: 'class_code is required' });
       return;
-    }
+    }    
 
     const result = await query(
       `INSERT INTO classes (class_code, class_name, grade, status)

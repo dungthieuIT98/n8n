@@ -294,7 +294,7 @@ router.post('/:id/reprocess', requireAuth, async (request, response, next) => {
   }
 });
 
-// PUT /api/exams/:id - Update exam
+// PUT /api/exams/:id - Update exam (metadata only, or with new files → triggers n8n extract)
 router.put('/:id', requireAuth, async (request, response, next) => {
   try {
     const examId = parseId(request.params.id);
@@ -302,6 +302,10 @@ router.put('/:id', requireAuth, async (request, response, next) => {
       response.status(400).json({ ok: false, message: 'Invalid exam id' });
       return;
     }
+
+    const questionFile = request.files?.question_file?.[0];
+    const answerFile = request.files?.answer_file?.[0];
+    const hasNewFiles = Boolean(questionFile && answerFile);
 
     const updateResult = await query(`
       UPDATE exams
@@ -312,10 +316,11 @@ router.put('/:id', requireAuth, async (request, response, next) => {
           subject_name = COALESCE($6, subject_name),
           exam_type = COALESCE($7, exam_type),
           exam_round = COALESCE($8, exam_round),
+          ${hasNewFiles ? 'version = version + 1, status = \'processing\',' : ''}
           updated_at = NOW(),
           updated_by = $9
       WHERE id = $1 AND teacher_id = $9
-      RETURNING id
+      RETURNING id, exam_code, class_code, version, title, description, subject_code, subject_name, exam_type, exam_round
     `, [
       examId,
       request.body.title || null,
@@ -331,6 +336,61 @@ router.put('/:id', requireAuth, async (request, response, next) => {
     if (updateResult.rowCount === 0) {
       response.status(404).json({ ok: false, message: 'Exam not found or unauthorized' });
       return;
+    }
+
+    const exam = updateResult.rows[0];
+
+    if (hasNewFiles) {
+      await query(`
+        INSERT INTO system_logs (
+          log_type, ref_table, ref_id, exam_id, class_code,
+          workflow_execution_id, model_name, status, message, request_payload, created_by, updated_by
+        ) VALUES (
+          'exam_extract', 'exams', $1, $1, $2, $3, 'gpt-5.4', 'running', $4, $5::jsonb, $6, $6
+        )
+      `, [
+        exam.id,
+        exam.class_code,
+        `wf-extract-${exam.exam_code.toLowerCase()}-v${exam.version}`,
+        'Cap nhat file moi, kich hoat extract lai.',
+        JSON.stringify({ exam_code: exam.exam_code, version: exam.version, question_file: questionFile.originalname, answer_file: answerFile.originalname }),
+        request.session.teacher.id
+      ]);
+
+      try {
+        await forwardExamToN8n(questionFile, answerFile, {
+          exam_id: examId,
+          exam_code: exam.exam_code,
+          title: exam.title,
+          description: exam.description || '',
+          class_code: exam.class_code,
+          subject_code: exam.subject_code,
+          subject_name: exam.subject_name,
+          exam_type: exam.exam_type,
+          exam_round: exam.exam_round,
+          teacher_id: request.session.teacher.id
+        });
+      } catch (n8nError) {
+        await query(`
+          UPDATE exams SET status = 'processing', updated_at = NOW() WHERE id = $1
+        `, [examId]);
+        await query(`
+          INSERT INTO system_logs (
+            log_type, ref_table, ref_id, exam_id, class_code,
+            workflow_execution_id, model_name, status, message, error_message, request_payload, created_by, updated_by
+          ) VALUES (
+            'exam_extract', 'exams', $1, $1, $2, $3, 'gpt-5.4', 'failed', $4, $5, $6::jsonb, $7, $7
+          )
+        `, [
+          exam.id,
+          exam.class_code,
+          `wf-extract-${exam.exam_code.toLowerCase()}-v${exam.version}-err`,
+          'Khong the kich hoat workflow extract.',
+          n8nError.payload?.message || n8nError.message,
+          JSON.stringify({ exam_code: exam.exam_code, version: exam.version }),
+          request.session.teacher.id
+        ]);
+      }
     }
 
     const detail = await queryEntityDetail('exams', examId);

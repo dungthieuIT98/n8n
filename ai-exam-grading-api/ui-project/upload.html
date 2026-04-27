@@ -74,15 +74,9 @@
                   <div class="text-sm font-semibold text-slate-700">Dot thi</div>
                   <select class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20" name="exam_round" required>
                     <option value="">Chon dot</option>
-                    <option value="dot_1">Dot 1</option>
-                    <option value="dot_2">Dot 2</option>
-                    <option value="dot_bo_sung">Dot bo sung</option>
                   </select>
                 </label>
-                <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">teacher_id</div>
-                  <input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900/20" type="text" name="teacher_id" required>
-                </label>
+                <input type="hidden" name="teacher_id" required>
               </div>
 
               <label class="block">
@@ -106,11 +100,11 @@
             <div class="p-4 space-y-4">
               <label class="block">
                 <div class="text-sm font-semibold text-slate-700">File de thi</div>
-                <input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" type="file" name="question_file" accept=".pdf,.docx,.png,.jpg,.zip" required>
+                <input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" type="file" name="question_file" form="upload-form" accept=".pdf,.docx,.png,.jpg,.zip" required>
               </label>
               <label class="block">
                 <div class="text-sm font-semibold text-slate-700">File dap an / loi giai</div>
-                <input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" type="file" name="answer_file" accept=".pdf,.docx,.png,.jpg,.zip" required>
+                <input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" type="file" name="answer_file" form="upload-form" accept=".pdf,.docx,.png,.jpg,.zip" required>
               </label>
               <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div class="font-bold">Luu y upload</div>

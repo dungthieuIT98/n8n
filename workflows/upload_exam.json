@@ -1,5 +1,4 @@
 {
-  "name": "upload_exam",
   "nodes": [
     {
       "parameters": {
@@ -10,80 +9,38 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        2448,
-        -496
+        -1472,
+        208
       ],
-      "id": "c188cec2-b02d-49d6-9cd1-a345f77ff403",
+      "id": "95728df6-0c12-4a85-b0d7-3549ffe8a23d",
       "name": "On API submission",
       "webhookId": "upload-exam-api",
       "alwaysOutputData": true
     },
     {
       "parameters": {
-        "jsCode": "const item = $input.first();\nconst body = item.json.body || item.json || {};\nconst binary = item.binary || {};\n\nconst questionFile = binary.question_file;\nconst answerFile = binary.answer_file;\n\nif (!questionFile || !answerFile) {\n  throw new Error('Thieu file question_file hoac answer_file. Gui multipart/form-data tu API backend.');\n}\n\nconst examCode = String(body.exam_code || '').trim();\nif (!examCode) {\n  throw new Error('Thieu exam_code.');\n}\n\nconst title = String(body.title || '').trim();\nif (!title) {\n  throw new Error('Thieu title de thi.');\n}\n\nconst examType = String(body.exam_type || '').trim();\nif (!examType) {\n  throw new Error('Thieu exam_type.');\n}\n\nconst teacherId = Number(body.teacher_id);\nif (!Number.isInteger(teacherId) || teacherId <= 0) {\n  throw new Error('teacher_id khong hop le.');\n}\n\nconst questionFilename = String(questionFile.fileName || questionFile.filename || '').trim();\nconst answerFilename = String(answerFile.fileName || answerFile.filename || '').trim();\nconst answerName = answerFilename.toLowerCase();\nconst answerMime = String(answerFile.mimeType || answerFile.mimetype || '').toLowerCase();\nconst supportedExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.webp', '.doc', '.docx'];\nconst hasSupportedExtension = supportedExtensions.some((extension) => answerName.endsWith(extension));\nconst supportedMimeTypes = [\n  'application/pdf',\n  'image/png',\n  'image/jpeg',\n  'image/webp',\n  'application/msword',\n  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'\n];\n\nif (!hasSupportedExtension && !supportedMimeTypes.includes(answerMime)) {\n  throw new Error('answer_file khong thuoc dinh dang OCR duoc ho tro.');\n}\n\nreturn [{\n  json: {\n    exam_code: examCode,\n    title,\n    description: String(body.description || '').trim(),\n    class_code: String(body.class_code || '').trim(),\n    subject_code: String(body.subject_code || '').trim(),\n    subject_name: String(body.subject_name || '').trim(),\n    exam_type: examType,\n    teacher_id: teacherId,\n    question_filename: questionFilename,\n    answer_filename: answerFilename,\n    question_file_path: questionFilename || null,\n    answer_file_path: answerFilename || null\n  },\n  binary: {\n    question_file: questionFile,\n    answer_file: answerFile\n  }\n}];"
+        "jsCode": "const item = $input.first();\nconst body = item.json.body || item.json || {};\nconst binary = item.binary || {};\n\nconst questionFile = binary.question_file;\nconst answerFile = binary.answer_file;\n\nif (!questionFile || !answerFile) {\n  throw new Error('Thieu file question_file hoac answer_file. Gui multipart/form-data tu API backend.');\n}\n\nconst examId = Number(body.exam_id);\nif (!Number.isInteger(examId) || examId <= 0) {\n  throw new Error('exam_id khong hop le.');\n}\n\nconst examCode = String(body.exam_code || '').trim();\nif (!examCode) {\n  throw new Error('Thieu exam_code.');\n}\n\nconst title = String(body.title || '').trim();\nif (!title) {\n  throw new Error('Thieu title de thi.');\n}\n\nconst examType = String(body.exam_type || '').trim();\nif (!examType) {\n  throw new Error('Thieu exam_type.');\n}\n\nconst teacherId = Number(body.teacher_id);\nif (!Number.isInteger(teacherId) || teacherId <= 0) {\n  throw new Error('teacher_id khong hop le.');\n}\n\nconst examRound = String(body.exam_round || '').trim();\n\nconst questionFilename = String(questionFile.fileName || questionFile.filename || '').trim();\nconst answerFilename = String(answerFile.fileName || answerFile.filename || '').trim();\nconst answerName = answerFilename.toLowerCase();\nconst answerMime = String(answerFile.mimeType || answerFile.mimetype || '').toLowerCase();\nconst supportedExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.webp', '.doc', '.docx'];\nconst hasSupportedExtension = supportedExtensions.some((extension) => answerName.endsWith(extension));\nconst supportedMimeTypes = [\n  'application/pdf',\n  'image/png',\n  'image/jpeg',\n  'image/webp',\n  'application/msword',\n  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'\n];\n\nif (!hasSupportedExtension && !supportedMimeTypes.includes(answerMime)) {\n  throw new Error('answer_file khong thuoc dinh dang OCR duoc ho tro.');\n}\n\nreturn [{\n  json: {\n    exam_id: examId,\n    exam_code: examCode,\n    title,\n    description: String(body.description || '').trim(),\n    class_code: String(body.class_code || '').trim(),\n    subject_code: String(body.subject_code || '').trim(),\n    subject_name: String(body.subject_name || '').trim(),\n    exam_type: examType,\n    exam_round: examRound,\n    teacher_id: teacherId,\n    question_filename: questionFilename,\n    answer_filename: answerFilename,\n    question_file_path: questionFilename || null,\n    answer_file_path: answerFilename || null\n  },\n  binary: {\n    question_file: questionFile,\n    answer_file: answerFile\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2672,
-        -496
+        -1232,
+        224
       ],
-      "id": "0a6f619e-190a-4b58-a0d2-fc0e81b8c84a",
+      "id": "dd79d149-98a8-4253-bbea-21648d7af81b",
       "name": "Validate API payload"
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO exams (\n  exam_code,\n  title,\n  description,\n  class_code,\n  subject_code,\n  subject_name,\n  exam_type,\n  teacher_id,\n  question_file_path,\n  answer_file_path,\n  status,\n  created_at,\n  updated_at,\n  created_by,\n  updated_by\n) VALUES (\n  '{{ ($json.exam_code || '').replace(/'/g, \"''\") }}',\n  '{{ ($json.title || '').replace(/'/g, \"''\") }}',\n  {{ $json.description ? `'${$json.description.replace(/'/g, \"''\")}'` : 'NULL' }},\n  {{ $json.class_code ? `'${$json.class_code.replace(/'/g, \"''\")}'` : 'NULL' }},\n  {{ $json.subject_code ? `'${$json.subject_code.replace(/'/g, \"''\")}'` : 'NULL' }},\n  {{ $json.subject_name ? `'${$json.subject_name.replace(/'/g, \"''\")}'` : 'NULL' }},\n  '{{ ($json.exam_type || '').replace(/'/g, \"''\") }}',\n  {{ Number($json.teacher_id) }},\n  {{ $json.question_file_path ? `'${$json.question_file_path.replace(/'/g, \"''\")}'` : 'NULL' }},\n  {{ $json.answer_file_path ? `'${$json.answer_file_path.replace(/'/g, \"''\")}'` : 'NULL' }},\n  'processing',\n  NOW(),\n  NOW(),\n  {{ Number($json.teacher_id) }},\n  {{ Number($json.teacher_id) }}\n) RETURNING id AS exam_id, exam_code, title, description, class_code, subject_code, subject_name, exam_type, teacher_id, question_file_path, answer_file_path, status;",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        2896,
-        -496
-      ],
-      "id": "17f0c592-e457-42ae-a813-c7588b2de3ea",
-      "name": "Create exam record",
-      "credentials": {
-        "postgres": {
-          "id": "niW3RY5UmjUzxGIm",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO system_logs (\n  log_type,\n  ref_table,\n  ref_id,\n  exam_id,\n  class_code,\n  workflow_execution_id,\n  model_name,\n  status,\n  message,\n  request_payload,\n  created_at,\n  created_by,\n  updated_by\n) VALUES (\n  'exam_extract',\n  'exams',\n  {{ $json.exam_id }},\n  {{ $json.exam_id }},\n  {{ $json.class_code ? `'${$json.class_code.replace(/'/g, \"''\")}'` : 'NULL' }},\n  '{{ $execution.id }}',\n  'google-drive + mistral-ocr-latest + gpt-4.1-mini',\n  'running',\n  'Da nhan upload_exam qua API, dang upload file len Drive va OCR dap an.',\n  jsonb_build_object(\n    'exam_code', '{{ ($json.exam_code || '').replace(/'/g, \"''\") }}',\n    'title', '{{ ($json.title || '').replace(/'/g, \"''\") }}',\n    'question_file', '{{ ($json.question_filename || '').replace(/'/g, \"''\") }}',\n    'answer_file', '{{ ($json.answer_filename || '').replace(/'/g, \"''\") }}'\n  ),\n  NOW(),\n  {{ Number.isInteger(Number($json.teacher_id)) ? Number($json.teacher_id) : 'NULL' }},\n  {{ Number.isInteger(Number($json.teacher_id)) ? Number($json.teacher_id) : 'NULL' }}\n);",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        3120,
-        -496
-      ],
-      "id": "11ea0203-20cc-4ce8-bc47-ffdb33c5d259",
-      "name": "Log extraction started",
-      "credentials": {
-        "postgres": {
-          "id": "niW3RY5UmjUzxGIm",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const created = $('Create exam record').first().json;\nconst source = $('Validate API payload').first();\nreturn [{ json: { ...source.json, ...created }, binary: { ...source.binary } }];"
+        "jsCode": "const source = $('Validate API payload').first();\nreturn [{ json: { ...source.json, }, binary: { ...source.binary } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3344,
-        -496
+        -960,
+        224
       ],
-      "id": "0f3c454f-63ab-432c-933d-59028b2f6021",
+      "id": "58019132-28d3-4fd9-9527-be4694fcb7d1",
       "name": "Restore validated payload"
     },
     {
@@ -107,10 +64,10 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        3568,
-        -496
+        -736,
+        224
       ],
-      "id": "505208dd-fe92-43a5-b734-230a54f0eedc",
+      "id": "1667b240-f539-4b26-bbb7-072e7a8b1282",
       "name": "Upload question file",
       "alwaysOutputData": true,
       "credentials": {
@@ -127,10 +84,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3792,
-        -496
+        -512,
+        224
       ],
-      "id": "02a3d73b-8bd7-48cc-a46a-eeca960208a5",
+      "id": "3454c324-10cc-4ccf-9ec9-4d91fdf8606d",
       "name": "Restore payload after question upload"
     },
     {
@@ -154,10 +111,10 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        4016,
-        -496
+        -288,
+        224
       ],
-      "id": "915feb41-2a8d-4904-9730-3eef09282a37",
+      "id": "842a6554-76c7-42d7-951c-4b7b87ace125",
       "name": "Upload answer file",
       "alwaysOutputData": true,
       "credentials": {
@@ -174,10 +131,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4144,
-        -768
+        -160,
+        -48
       ],
-      "id": "0da02516-6875-4016-8502-39ea85e5af37",
+      "id": "877cafad-9011-49a6-8887-ec3d150d51a4",
       "name": "Attach Drive uploads"
     },
     {
@@ -203,12 +160,12 @@
         },
         "options": {}
       },
-      "id": "69ceb3a7-e83c-4f53-81eb-aad2aa41a38e",
+      "id": "a953fe4a-f8c2-416f-bb1b-043beea33ac7",
       "name": "Mistral Upload",
       "type": "n8n-nodes-base.httpRequest",
       "position": [
-        4240,
-        -496
+        -64,
+        224
       ],
       "typeVersion": 4.2,
       "credentials": {
@@ -243,12 +200,12 @@
         },
         "options": {}
       },
-      "id": "e02cc541-bbc5-4152-bd08-44507cf097d7",
+      "id": "612b35b4-baab-45ad-9ec5-af8a6239a08b",
       "name": "Mistral Signed URL",
       "type": "n8n-nodes-base.httpRequest",
       "position": [
-        4464,
-        -496
+        160,
+        224
       ],
       "typeVersion": 4.2,
       "credentials": {
@@ -269,12 +226,12 @@
         "jsonBody": "={\n  \"model\": \"mistral-ocr-latest\",\n  \"document\": {\n    \"type\": \"document_url\",\n    \"document_url\": \"{{ $json.url }}\"\n  },\n  \"include_image_base64\": false\n}",
         "options": {}
       },
-      "id": "446f68a6-1c28-47ab-95c2-9b5187bc2a61",
+      "id": "223ea895-ae88-4f8b-88ee-c4b00edebc6f",
       "name": "Mistral DOC OCR",
       "type": "n8n-nodes-base.httpRequest",
       "position": [
-        4688,
-        -496
+        384,
+        224
       ],
       "typeVersion": 4.2,
       "credentials": {
@@ -307,10 +264,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        4912,
-        -496
+        608,
+        224
       ],
-      "id": "2a0e414f-1d39-42ec-98cd-7f88bf5070df",
+      "id": "bf293835-5dd0-4b7d-9fa4-dcad2a234656",
       "name": "Edit Fields"
     },
     {
@@ -320,32 +277,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5136,
-        -496
+        832,
+        224
       ],
-      "id": "c585f5a4-4f90-417a-bc2c-c7c2486d3106",
+      "id": "0d66a219-5636-49e1-a572-1290fcc6e8da",
       "name": "Restore OCR context"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO system_logs (\n  log_type,\n  ref_table,\n  ref_id,\n  exam_id,\n  class_code,\n  workflow_execution_id,\n  model_name,\n  status,\n  message,\n  response_payload,\n  created_at,\n  created_by,\n  updated_by\n) VALUES (\n  'exam_extract',\n  'exams',\n  {{ $('Create exam record').item.json.exam_id }},\n  {{ $('Create exam record').item.json.exam_id }},\n  {{ $json.class_code ? `'${$json.class_code.replace(/'/g, \"''\")}'` : 'NULL' }},\n  '{{ $execution.id }}',\n  'mistral-ocr-latest',\n  'running',\n  'OCR dap an hoan tat, chuyen sang chuan hoa JSON.',\n  jsonb_build_object(\n    'exam_code', '{{ ($json.exam_code || '').replace(/'/g, \"''\") }}',\n    'question_file_path', '{{ ($json.question_file_path || '').replace(/'/g, \"''\") }}',\n    'answer_file_path', '{{ ($json.answer_file_path || '').replace(/'/g, \"''\") }}',\n    'page_count', {{ Number($json.page_count || 0) }},\n    'markdown_length', {{ Number(($json.markdown || '').length) }}\n  ),\n  NOW(),\n  {{ Number.isInteger(Number($json.teacher_id)) ? Number($json.teacher_id) : 'NULL' }},\n  {{ Number.isInteger(Number($json.teacher_id)) ? Number($json.teacher_id) : 'NULL' }}\n);",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        5360,
-        -496
-      ],
-      "id": "1dc9a6d5-f5f7-4b94-a33a-5b1f44c398ff",
-      "name": "Log OCR completed",
-      "credentials": {
-        "postgres": {
-          "id": "niW3RY5UmjUzxGIm",
-          "name": "Postgres account"
-        }
-      }
     },
     {
       "parameters": {
@@ -354,10 +290,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5584,
-        -496
+        1280,
+        224
       ],
-      "id": "3e83626a-9b36-45d1-84ba-2b5b51b99980",
+      "id": "427576ae-5575-4b05-8ccf-1309f0430d89",
       "name": "Restore extracted markdown"
     },
     {
@@ -381,10 +317,10 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.1,
       "position": [
-        5728,
-        -608
+        1424,
+        112
       ],
-      "id": "cdcb1560-6000-4ba7-99a5-1b2fe05c658f",
+      "id": "a754341a-e34c-4eb6-a56a-64620f753eec",
       "name": "Message a model",
       "credentials": {
         "openAiApi": {
@@ -410,10 +346,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        6032,
-        -496
+        1728,
+        224
       ],
-      "id": "4235bc1d-de15-4b9d-a41c-ab20748044e9",
+      "id": "b89bf976-c50e-47b8-8a2f-e8cd3433fcab",
       "name": "Edit Fields1"
     },
     {
@@ -423,23 +359,23 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6256,
-        -496
+        1952,
+        224
       ],
-      "id": "2ba8df88-a94a-4c77-95de-6670dfcb3046",
+      "id": "86304e7e-be7f-424b-a44e-9d38dcad2b81",
       "name": "exam_detail"
     },
     {
       "parameters": {
-        "jsCode": "const meta = $('Restore extracted markdown').first().json;\nconst extract = $('exam_detail').first().json.extract_json;\nconst examRecord = $('Create exam record').first().json;\nfunction escapeLiteral(value) { return String(value ?? '').replace(/'/g, \"''\"); }\nfunction sqlNumber(value) { const number = Number(value); return Number.isFinite(number) ? String(number) : 'NULL'; }\nfunction sqlJson(value) { if (value === undefined || value === null) { return 'NULL'; } return `'${escapeLiteral(JSON.stringify(value))}'::jsonb`; }\nconst status = 'active';\nconst sql = `\nUPDATE exams\nSET\n  answer_extract = ${sqlJson(extract)},\n  status = '${status}',\n  updated_at = NOW(),\n  updated_by = ${sqlNumber(meta.teacher_id)}\nWHERE id = ${sqlNumber(examRecord.exam_id)};`;\nreturn [{ json: { exam_id: examRecord.exam_id, exam_code: examRecord.exam_code, answer_extract: extract, status, sql } }];"
+        "jsCode": "const meta = $('Restore extracted markdown').first().json;\nconst extract = $('exam_detail').first().json.extract_json;\nfunction escapeLiteral(value) { return String(value ?? '').replace(/'/g, \"''\"); }\nfunction sqlNumber(value) { const number = Number(value); return Number.isFinite(number) ? String(number) : 'NULL'; }\nfunction sqlJson(value) { if (value === undefined || value === null) { return 'NULL'; } return `'${escapeLiteral(JSON.stringify(value))}'::jsonb`; }\nconst status = 'active';\nconst sql = `\nUPDATE exams\nSET\n  answer_extract = ${sqlJson(extract)},\n  status = '${status}',\n  updated_at = NOW(),\n  updated_by = ${sqlNumber(meta.teacher_id)}\nWHERE id = ${sqlNumber(meta.exam_id)};`;\nreturn [{ json: { exam_id: meta.exam_id, exam_code: meta.exam_code, answer_extract: extract, status, sql } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6480,
-        -496
+        2176,
+        224
       ],
-      "id": "46c8445c-4cb6-4a04-b331-7f2a5675c1ec",
+      "id": "72f724b6-20f0-4773-b6d8-7296a37dc746",
       "name": "Build final SQL"
     },
     {
@@ -451,10 +387,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        6704,
-        -496
+        2400,
+        224
       ],
-      "id": "23a94399-f431-4536-95a3-2d9413c6c955",
+      "id": "1f90e179-5973-4c54-9a2e-113239a473d4",
       "name": "Execute a SQL query",
       "credentials": {
         "postgres": {
@@ -462,22 +398,8 @@
           "name": "Postgres account"
         }
       }
-    },
-    {
-      "parameters": {
-        "jsCode": "const result = $('Build final SQL').first().json;\nreturn [{ json: { ok: true, message: 'upload_exam API completed successfully', exam_id: result.exam_id, exam_code: result.exam_code, status: result.status, answer_extract: result.answer_extract } }];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        6928,
-        -496
-      ],
-      "id": "b8eda85a-a5eb-47a0-abb5-4320269436f1",
-      "name": "Prepare response"
     }
   ],
-  "pinData": {},
   "connections": {
     "On API submission": {
       "main": [
@@ -491,28 +413,6 @@
       ]
     },
     "Validate API payload": {
-      "main": [
-        [
-          {
-            "node": "Create exam record",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create exam record": {
-      "main": [
-        [
-          {
-            "node": "Log extraction started",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Log extraction started": {
       "main": [
         [
           {
@@ -626,17 +526,6 @@
       "main": [
         [
           {
-            "node": "Log OCR completed",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Log OCR completed": {
-      "main": [
-        [
-          {
             "node": "Restore extracted markdown",
             "type": "main",
             "index": 0
@@ -701,25 +590,12 @@
     },
     "Execute a SQL query": {
       "main": [
-        [
-          {
-            "node": "Prepare response",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     }
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate"
-  },
-  "versionId": "c9c94e4d-ecb2-46ea-92fa-1ccaf8e16978",
+  "pinData": {},
   "meta": {
     "instanceId": "8120a54d1a3549819c2312ef6fd3824d752b9ddef79c687fc69a09152bfe9d23"
-  },
-  "id": "EBV5iF8fhHvypvHp",
-  "tags": []
+  }
 }

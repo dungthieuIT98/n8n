@@ -76,6 +76,17 @@
     });
   }
 
+  function updateExam(examId, formData) {
+    return request(`/api/exams/${examId}`, {
+      method: 'PUT',
+      body: formData
+    });
+  }
+
+  function deleteExam(examId) {
+    return request(`/api/exams/${examId}`, { method: 'DELETE' });
+  }
+
   function reprocessExam(examId) {
     return request(`/api/exams/${examId}/reprocess`, { method: 'POST' });
   }
@@ -113,6 +124,8 @@
     login,
     logout,
     createExam,
+    updateExam,
+    deleteExam,
     reprocessExam,
     regradeSubmission,
     approveSubmission,

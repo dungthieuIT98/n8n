@@ -14,7 +14,7 @@
 </head>
 <body data-page="exams" class="bg-slate-50 text-slate-900">
   <div class="min-h-screen flex">
-    <aside class="w-64 bg-white border-r border-slate-200 p-4">
+    <aside class="w-64 bg-white border-r border-slate-200 p-4 flex-shrink-0">
       <div class="mb-4">
         <div class="text-xs font-semibold text-slate-500">Teacher Portal</div>
         <div class="text-lg font-extrabold"><a class="hover:underline" href="index.html">AI Exam Grading</a></div>
@@ -29,83 +29,145 @@
       </div>
     </aside>
 
-    <main class="flex-1 p-6">
+    <main class="flex-1 p-6 min-w-0">
       <div class="max-w-6xl mx-auto space-y-6">
-        <section class="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+
+        <!-- Header -->
+        <section class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between gap-4">
           <div>
             <div class="text-xs font-semibold text-slate-500">Teacher workspace</div>
             <h1 class="text-2xl font-extrabold mt-1">Quan ly de thi</h1>
-            <p class="text-sm text-slate-600 mt-1">Loc, xem chi tiet va tang version de thi khi cap nhat file de thi hoac dap an.</p>
+            <p class="text-sm text-slate-600 mt-1">Loc, xem chi tiet va cap nhat de thi.</p>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <a class="px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold" href="upload.html">Them de thi moi</a>
-          </div>
+          <a class="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold whitespace-nowrap hover:bg-slate-800 transition-colors" href="upload.html">+ Them de thi</a>
         </section>
 
+        <!-- List section -->
         <section class="bg-white border border-slate-200 rounded-2xl">
           <div class="p-4 border-b border-slate-200">
             <h2 class="font-extrabold">Danh sach de thi</h2>
-            <p class="text-sm text-slate-600">Loc nhanh theo lop, mon, loai va trang thai de kiem soat version.</p>
+            <p class="text-sm text-slate-600">Loc nhanh theo lop, mon, loai va trang thai.</p>
           </div>
 
           <div class="p-4 space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-              <label class="block">
-                <div class="text-sm font-semibold text-slate-700">Lop</div>
-                <select id="exam-filter-class" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
-              </label>
-              <label class="block">
-                <div class="text-sm font-semibold text-slate-700">Mon hoc</div>
-                <select id="exam-filter-subject" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
-              </label>
-              <label class="block">
-                <div class="text-sm font-semibold text-slate-700">Loai bai thi</div>
-                <select id="exam-filter-type" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
-              </label>
-              <label class="block">
-                <div class="text-sm font-semibold text-slate-700">Trang thai</div>
-                <select id="exam-filter-status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
-              </label>
+            <!-- Filters -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <select id="exam-filter-class" class="rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20"></select>
+              <select id="exam-filter-subject" class="rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20"></select>
+              <select id="exam-filter-type" class="rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20"></select>
+              <select id="exam-filter-status" class="rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20"></select>
             </div>
 
-            <div class="overflow-auto border border-slate-200 rounded-xl">
+            <!-- Table -->
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
               <table class="min-w-full text-sm">
-                <thead class="text-left text-slate-600 bg-slate-50">
+                <thead class="bg-slate-50 text-slate-600 text-xs border-b border-slate-200">
                   <tr>
-                    <th class="py-2 px-3">Ma de thi</th>
-                    <th class="py-2 px-3">Version</th>
-                    <th class="py-2 px-3">Ten de thi</th>
-                    <th class="py-2 px-3">Lop</th>
-                    <th class="py-2 px-3">Mon</th>
-                    <th class="py-2 px-3">Loai</th>
-                    <th class="py-2 px-3">So bai nop</th>
-                    <th class="py-2 px-3">Trang thai</th>
-                    <th class="py-2 px-3">Ngay tao</th>
-                    <th class="py-2 px-3">Nguoi tao</th>
-                    <th class="py-2 px-3">Hanh dong</th>
+                    <th class="py-2.5 px-3 text-left font-semibold whitespace-nowrap w-64">Ten de thi</th>
+                    <th class="py-2.5 px-3 text-left font-semibold whitespace-nowrap">Lop / Mon</th>
+                    <th class="py-2.5 px-3 text-left font-semibold whitespace-nowrap">Ngay tao</th>
+                    <th class="py-2.5 px-3 text-left font-semibold whitespace-nowrap">Trang thai</th>
+                    <th class="py-2.5 px-3 text-left font-semibold whitespace-nowrap">Hanh dong</th>
                   </tr>
                 </thead>
                 <tbody id="exam-table-body" class="divide-y divide-slate-100"></tbody>
               </table>
             </div>
+
+            <!-- Pagination -->
+            <div id="exam-pagination" class="flex items-center justify-between gap-2 flex-wrap min-h-[36px]"></div>
           </div>
         </section>
       </div>
-
-      <!-- Detail Modal -->
-      <div data-modal id="exam-detail-modal" class="fixed inset-0 hidden items-center justify-center p-4">
-        <div data-modal-overlay class="absolute inset-0 bg-black/40"></div>
-        <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-200">
-          <div class="p-4 border-b border-slate-200 flex items-center justify-between">
-            <h3 id="exam-modal-title" class="font-extrabold">Chi tiet de thi</h3>
-            <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" data-close-modal="exam-detail-modal" id="exam-modal-close">Dong</button>
-          </div>
-          <div class="p-4" id="exam-detail-content">
-            <p>Dang tai...</p>
-          </div>
-        </div>
-      </div>
     </main>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="exam-detail-modal" class="fixed inset-0 hidden z-50 items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40" id="exam-detail-overlay"></div>
+    <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col" style="max-height:90vh">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0 gap-4">
+        <h3 id="exam-modal-title" class="font-extrabold truncate">Chi tiet de thi</h3>
+        <button id="exam-modal-close" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold whitespace-nowrap flex-shrink-0">Dong</button>
+      </div>
+      <div id="exam-detail-content" class="p-4 overflow-y-auto flex-1">
+        <p class="text-sm text-slate-500">Dang tai...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Modal -->
+  <div id="exam-update-modal" class="fixed inset-0 hidden z-50 items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40" id="exam-update-overlay"></div>
+    <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col" style="max-height:90vh">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+        <h3 class="font-extrabold">Cap nhat de thi</h3>
+        <button id="exam-update-close" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold">Dong</button>
+      </div>
+      <div class="p-4 overflow-y-auto flex-1">
+        <form id="exam-update-form" class="space-y-4">
+          <input type="hidden" id="update-exam-id">
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <label class="block lg:col-span-3">
+              <div class="text-sm font-semibold text-slate-700">Ten de thi</div>
+              <input id="update-title" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20" type="text" required>
+            </label>
+            <label class="block">
+              <div class="text-sm font-semibold text-slate-700">Lop hoc</div>
+              <select id="update-class-code" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20" required></select>
+            </label>
+            <label class="block">
+              <div class="text-sm font-semibold text-slate-700">Mon hoc</div>
+              <select id="update-subject-code" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20" required></select>
+            </label>
+            <label class="block">
+              <div class="text-sm font-semibold text-slate-700">Loai bai thi</div>
+              <select id="update-exam-type" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20" required>
+                <option value="15p">15 phut</option>
+                <option value="giua_ky">Giua ky</option>
+                <option value="cuoi_ky">Cuoi ky</option>
+                <option value="thu">Thu</option>
+              </select>
+            </label>
+            <label class="block">
+              <div class="text-sm font-semibold text-slate-700">Dot thi</div>
+              <select id="update-exam-round" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20" required></select>
+            </label>
+          </div>
+
+          <label class="block">
+            <div class="text-sm font-semibold text-slate-700">Mo ta</div>
+            <textarea id="update-description" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20" rows="3" placeholder="Mo ta de thi..."></textarea>
+          </label>
+
+          <!-- File upload (optional) -->
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div>
+              <div class="font-semibold text-sm text-slate-800">Cap nhat file (khong bat buoc)</div>
+              <p class="text-xs text-slate-500 mt-0.5">Neu chon ca 2 file moi, he thong se extract lai noi dung qua n8n workflow va tang phien ban de thi.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label class="block">
+                <div class="text-sm font-semibold text-slate-700">File de thi (moi)</div>
+                <input id="update-question-file" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" type="file" accept=".pdf,.docx,.png,.jpg,.zip">
+              </label>
+              <label class="block">
+                <div class="text-sm font-semibold text-slate-700">File dap an (moi)</div>
+                <input id="update-answer-file" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" type="file" accept=".pdf,.docx,.png,.jpg,.zip">
+              </label>
+            </div>
+          </div>
+
+          <div id="update-message"></div>
+
+          <div class="flex gap-2 pt-1">
+            <button type="submit" id="update-submit-btn" class="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors disabled:opacity-50">Luu thay doi</button>
+            <button type="button" id="exam-update-cancel" class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold transition-colors">Huy</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <script src="js/app-state.js"></script>

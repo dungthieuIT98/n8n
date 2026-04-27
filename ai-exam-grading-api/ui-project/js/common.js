@@ -97,6 +97,7 @@
       approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
       success: "bg-emerald-50 text-emerald-700 border-emerald-200",
       ready: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      active: "bg-emerald-50 text-emerald-700 border-emerald-200",
 
       processing: "bg-sky-50 text-sky-700 border-sky-200",
       running: "bg-sky-50 text-sky-700 border-sky-200",
