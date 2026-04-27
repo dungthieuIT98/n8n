@@ -41,7 +41,6 @@ async function studentResultsHandler(request, response, next) {
         gr.ai_confidence,
         gr.grading_detail,
         gr.general_feedback,
-        gr.notes,
         gr.graded_at,
         gr.review_status,
         gr.published_at,
@@ -51,11 +50,11 @@ async function studentResultsHandler(request, response, next) {
       FROM submissions s
       LEFT JOIN exams e ON e.id = s.exam_id
       LEFT JOIN LATERAL (
-        SELECT id, total_score, max_score, ai_confidence, grading_detail, general_feedback, notes,
+        SELECT id, total_score, max_score, ai_confidence, grading_detail, general_feedback,
                graded_at, review_status, published_at, reviewed_by, reviewed_at, status
         FROM grading_results
         WHERE submission_id = s.id
-        ORDER BY grading_attempt DESC
+        ORDER BY attempt_no DESC
         LIMIT 1
       ) gr ON true
       WHERE gr.status = 'published'
@@ -145,25 +144,59 @@ router.post('/', async (request, response, next) => {
       return;
     }
 
-    const result = await forwardSubmissionToN8n(file, request.body);
+    const body = request.body;
+    const examId = body.exam_id ? Number(body.exam_id) : null;
+
+    // 1. Luu submission vao DB
+    const submissionResult = await query(`
+      INSERT INTO submissions (exam_id, student_code, student_name, class_code, subject_code, submission_file_path, status)
+      VALUES ($1, $2, $3, $4, $5, $6, 'uploaded')
+      RETURNING id
+    `, [
+      examId,
+      String(body.student_code || '').trim(),
+      String(body.student_name || '').trim(),
+      String(body.class_code || '').trim(),
+      String(body.subject_code || '').trim(),
+      file.path
+    ]);
+
+    const submissionId = submissionResult.rows[0].id;
+
+    // 2. Luu log
+    await query(`
+      INSERT INTO system_logs (log_type, ref_table, ref_id, exam_id, submission_id, student_code, student_name, class_code, status, message, request_payload)
+      VALUES ('submission_upload', 'submissions', $1, $2, $1, $3, $4, $5, 'pending', 'Bai lam da luu, dang chuyen sang n8n workflow', $6)
+    `, [
+      submissionId,
+      examId,
+      String(body.student_code || '').trim(),
+      String(body.student_name || '').trim(),
+      String(body.class_code || '').trim(),
+      JSON.stringify({ exam_id: examId, exam_code: body.exam_code, exam_type: body.exam_type, subject_code: body.subject_code, notes: body.notes })
+    ]);
+
+    // 3. Tra ve ngay, goi n8n async (fire and forget)
     response.json({
       ok: true,
       message: 'Da nop bai thanh cong. He thong dang xu ly va cham diem.',
-      data: result
+      data: { submission_id: submissionId }
     });
-  } catch (error) {
-    if (error.statusCode) {
-      const message = error.payload?.message || 'Khong the goi workflow n8n.';
-      const hint = error.payload?.hint || null;
-      response.status(502).json({
-        ok: false,
-        message,
-        hint,
-        source: 'n8n-webhook'
-      });
-      return;
-    }
 
+    // Goi n8n sau khi da tra response
+    forwardSubmissionToN8n(file, { ...body, submission_id: submissionId }).then(async () => {
+      await query(`
+        UPDATE system_logs SET status = 'success', message = 'N8n workflow da nhan bai lam', updated_at = NOW()
+        WHERE ref_table = 'submissions' AND ref_id = $1 AND log_type = 'submission_upload'
+      `, [submissionId]);
+    }).catch(async (error) => {
+      await query(`
+        UPDATE system_logs SET status = 'error', error_message = $2, updated_at = NOW()
+        WHERE ref_table = 'submissions' AND ref_id = $1 AND log_type = 'submission_upload'
+      `, [submissionId, String(error.message || error)]);
+    });
+
+  } catch (error) {
     next(error);
   }
 });
@@ -176,95 +209,17 @@ router.post('/:id/regrade', requireAuth, async (request, response, next) => {
       return;
     }
 
-    // Get current grading result
-    const currentResult = await query(`
-      SELECT gr.*, s.exam_id, s.student_code, s.student_name, s.class_code, s.subject_code,
-             e.exam_code, e.title AS exam_title
-      FROM grading_results gr
-      INNER JOIN submissions s ON s.id = gr.submission_id
-      LEFT JOIN exams e ON e.id = s.exam_id
-      WHERE gr.submission_id = $1
-      ORDER BY gr.grading_attempt DESC
-      LIMIT 1
-    `, [submissionId]);
-
-    if (currentResult.rowCount === 0) {
-      response.status(404).json({ ok: false, message: 'Grading result not found' });
-      return;
-    }
-
-    const current = currentResult.rows[0];
-    const newTotalScore = Math.min(current.max_score || 10, (current.total_score || 0) + 0.25);
-    const newConfidence = Math.min(99, (current.ai_confidence || 80) + 3);
-
-    // Insert new grading attempt
     const updateResult = await query(`
-      INSERT INTO grading_results (
-        submission_id, exam_id, exam_code, exam_title, class_code, subject_code,
-        student_code, student_name, grading_attempt, grading_type,
-        total_score, max_score, ai_confidence, grading_detail, general_feedback,
-        graded_by, graded_by_name, review_status, status, created_by, updated_by
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, 're-grade',
-        $10, $11, $12, $13, $14, $15, $16, 'recheck', 'completed', $15, $15
-      )
-      RETURNING id, submission_id, exam_id, student_code, student_name, class_code, total_score, ai_confidence
-    `, [
-      submissionId,
-      current.exam_id,
-      current.exam_code,
-      current.exam_title,
-      current.class_code,
-      current.subject_code,
-      current.student_code,
-      current.student_name,
-      current.grading_attempt + 1,
-      newTotalScore,
-      current.max_score,
-      newConfidence,
-      current.grading_detail,
-      'Da duoc cham lai tu dong',
-      request.session.teacher.id,
-      request.session.teacher.full_name
-    ]);
+      UPDATE submissions
+      SET status = 'regrade', updated_at = NOW()
+      WHERE id = $1
+      RETURNING id
+    `, [submissionId]);
 
     if (updateResult.rowCount === 0) {
       response.status(404).json({ ok: false, message: 'Submission not found' });
       return;
     }
-
-    const result = updateResult.rows[0];
-    await query(`
-      INSERT INTO system_logs (
-        log_type,
-        ref_table,
-        ref_id,
-        exam_id,
-        submission_id,
-        student_code,
-        student_name,
-        class_code,
-        workflow_execution_id,
-        model_name,
-        status,
-        message,
-        response_payload,
-        created_by,
-        updated_by
-      ) VALUES (
-        'grading', 'grading_results', $1, $2, $3, $4, $5, $6, $7, 'gpt-5.4', 'success', 'Cham lai thanh cong.', $8::jsonb, $9, $9
-      )
-    `, [
-      result.id,
-      result.exam_id,
-      result.submission_id,
-      result.student_code,
-      result.student_name,
-      result.class_code,
-      `wf-regrade-${result.student_code.toLowerCase()}`,
-      JSON.stringify({ total_score: result.total_score, confidence: result.ai_confidence }),
-      request.session.teacher.id
-    ]);
 
     const detail = decorateSubmission(await queryEntityDetail('submissions', submissionId));
     response.json({ ok: true, data: detail });
@@ -281,6 +236,38 @@ router.post('/:id/approve', requireAuth, async (request, response, next) => {
       return;
     }
 
+    // Lấy dữ liệu submission cho log
+    const subData = await query(`
+      SELECT s.exam_id, s.student_code, s.student_name, s.class_code
+      FROM submissions s WHERE s.id = $1
+    `, [submissionId]);
+
+    if (subData.rowCount === 0) {
+      response.status(404).json({ ok: false, message: 'Submission not found' });
+      return;
+    }
+
+    const sub = subData.rows[0];
+
+    // Check grading result exists and is in a gradeable state
+    const gradingCheck = await query(`
+      SELECT id, status FROM grading_results
+      WHERE submission_id = $1
+      ORDER BY attempt_no DESC
+      LIMIT 1
+    `, [submissionId]);
+
+    if (gradingCheck.rowCount === 0) {
+      response.status(400).json({ ok: false, message: 'Bai nop chua duoc cham. Khong the phe duyet.' });
+      return;
+    }
+
+    const gradingStatus = gradingCheck.rows[0].status;
+    if (['pending', 'processing', 'failed'].includes(gradingStatus)) {
+      response.status(400).json({ ok: false, message: `Ket qua cham dang o trang thai "${gradingStatus}". Chi co the phe duyet khi bai da duoc cham xong.` });
+      return;
+    }
+
     // Update latest grading result to published
     const updateResult = await query(`
       UPDATE grading_results
@@ -289,15 +276,14 @@ router.post('/:id/approve', requireAuth, async (request, response, next) => {
           published_at = NOW(),
           reviewed_at = NOW(),
           reviewed_by = $2,
-          updated_at = NOW(),
-          updated_by = $2
+          updated_at = NOW()
       WHERE id = (
         SELECT id FROM grading_results
         WHERE submission_id = $1
-        ORDER BY grading_attempt DESC
+        ORDER BY attempt_no DESC
         LIMIT 1
       )
-      RETURNING id, submission_id, exam_id, student_code, student_name, class_code
+      RETURNING id, submission_id
     `, [submissionId, request.session.teacher.id]);
 
     if (updateResult.rowCount === 0) {
@@ -327,17 +313,116 @@ router.post('/:id/approve', requireAuth, async (request, response, next) => {
       )
     `, [
       result.id,
-      result.exam_id,
+      sub.exam_id,
       result.submission_id,
-      result.student_code,
-      result.student_name,
-      result.class_code,
-      `wf-publish-${result.student_code.toLowerCase()}`,
+      sub.student_code,
+      sub.student_name,
+      sub.class_code,
+      `wf-publish-${sub.student_code.toLowerCase()}`,
       request.session.teacher.id
     ]);
 
     const detail = decorateSubmission(await queryEntityDetail('submissions', submissionId));
     response.json({ ok: true, data: detail });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/submissions/:id/result - Get submission + latest grading result
+router.get('/:id/result', requireAuth, async (request, response, next) => {
+  try {
+    const submissionId = parseId(request.params.id);
+    if (!submissionId) {
+      response.status(400).json({ ok: false, message: 'Invalid submission id' });
+      return;
+    }
+
+    const result = await query(`
+      SELECT
+        s.id AS submission_id,
+        s.exam_id,
+        s.student_code,
+        s.student_name,
+        s.class_code,
+        s.subject_code,
+        s.submission_file_path,
+        s.submission_extract,
+        s.submitted_at,
+        s.status AS submission_status,
+        s.created_at,
+        s.updated_at,
+        e.exam_code,
+        e.title AS exam_title,
+        e.subject_name,
+        e.exam_type,
+        gr.id AS grading_id,
+        gr.attempt_no,
+        gr.grading_type,
+        gr.total_score,
+        gr.max_score,
+        gr.ai_confidence,
+        gr.grading_detail,
+        gr.general_feedback,
+        gr.review_notes AS notes,
+        gr.status AS grading_status,
+        gr.graded_at,
+        gr.graded_by_name
+      FROM submissions s
+      LEFT JOIN exams e ON e.id = s.exam_id
+      LEFT JOIN LATERAL (
+        SELECT id, attempt_no, grading_type, total_score, max_score, ai_confidence,
+               grading_detail, general_feedback, review_notes, status, graded_at, graded_by_name
+        FROM grading_results
+        WHERE submission_id = s.id
+        ORDER BY attempt_no DESC
+        LIMIT 1
+      ) gr ON true
+      WHERE s.id = $1
+    `, [submissionId]);
+
+    if (result.rowCount === 0) {
+      response.status(404).json({ ok: false, message: 'Submission not found' });
+      return;
+    }
+
+    const row = result.rows[0];
+    const payload = {
+      student: {
+        student_code: row.student_code,
+        student_name: row.student_name,
+        class_code: row.class_code,
+        subject_code: row.subject_code
+      },
+      submission: {
+        submission_id: row.submission_id,
+        exam_id: row.exam_id,
+        exam_code: row.exam_code,
+        exam_title: row.exam_title,
+        subject_name: row.subject_name,
+        exam_type: row.exam_type,
+        submission_file_path: row.submission_file_path,
+        submission_extract: row.submission_extract,
+        submitted_at: row.submitted_at,
+        status: row.submission_status
+      },
+      grading: row.grading_id ? {
+        grading_id: row.grading_id,
+        attempt_no: row.attempt_no,
+        grading_type: row.grading_type,
+        total_score: row.total_score,
+        max_score: row.max_score,
+        ai_confidence: row.ai_confidence,
+        grading_detail: row.grading_detail,
+        general_feedback: row.general_feedback,
+        notes: row.notes,
+        status: row.grading_status,
+        graded_at: row.graded_at,
+        graded_by_name: row.graded_by_name
+      } : null
+    };
+
+    response.json({ ok: true, data: payload });
   } catch (error) {
     next(error);
   }
@@ -376,21 +461,13 @@ router.get('/:id/history', requireAuth, async (request, response, next) => {
       SELECT
         id,
         submission_id,
-        exam_id,
-        exam_code,
-        exam_title,
-        class_code,
-        subject_code,
-        student_code,
-        student_name,
-        grading_attempt,
+        attempt_no,
         grading_type,
         total_score,
         max_score,
         ai_confidence,
         grading_detail,
         general_feedback,
-        notes,
         graded_by,
         graded_by_name,
         graded_at,
@@ -405,7 +482,7 @@ router.get('/:id/history', requireAuth, async (request, response, next) => {
         updated_at
       FROM grading_results
       WHERE submission_id = $1
-      ORDER BY grading_attempt DESC
+      ORDER BY attempt_no DESC
     `, [submissionId]);
 
     response.json({
@@ -461,14 +538,13 @@ router.get('/by-student', requireAuth, async (request, response, next) => {
         s.status AS submission_status,
         s.created_at AS submission_created_at,
         gr.id AS grading_result_id,
-        gr.grading_attempt,
+        gr.attempt_no,
         gr.grading_type,
         gr.total_score,
         gr.max_score,
         gr.ai_confidence,
         gr.grading_detail,
         gr.general_feedback,
-        gr.notes,
         gr.graded_by,
         gr.graded_by_name,
         gr.graded_at,
@@ -485,7 +561,7 @@ router.get('/by-student', requireAuth, async (request, response, next) => {
       LEFT JOIN exams e ON e.id = s.exam_id
       LEFT JOIN grading_results gr ON gr.submission_id = s.id
       WHERE s.exam_id = $1 AND s.student_code = $2
-      ORDER BY s.submitted_at DESC NULLS LAST, s.id DESC, gr.grading_attempt DESC
+      ORDER BY s.submitted_at DESC NULLS LAST, s.id DESC, gr.attempt_no DESC
     `, [examId, student_code]);
 
     response.json({

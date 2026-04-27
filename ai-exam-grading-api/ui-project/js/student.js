@@ -26,21 +26,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function formatDateTime(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat("vi-VN", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    }).format(date);
+  }
+
   function renderResults(results) {
     latestResults = results;
     tableBody.innerHTML = results.map((submission) => `
-      <tr>
-        <td class="py-2 px-3 font-semibold">${submission.exam_title}</td>
-        <td class="py-2 px-3">${submission.subject_name}</td>
-        <td class="py-2 px-3">${submission.exam_type}</td>
-        <td class="py-2 px-3">${submission.total_score}/${submission.max_score}</td>
-        <td class="py-2 px-3">${window.AppUI.renderStatus(submission.status)}</td>
-        <td class="py-2 px-3">${submission.graded_at || "-"}</td>
+      <tr class="hover:bg-slate-50">
+        <td class="py-2 px-3 font-semibold">${submission.exam_title || "-"}</td>
+        <td class="py-2 px-3">${submission.subject_name || "-"}</td>
+        <td class="py-2 px-3">${submission.exam_type || "-"}</td>
+        <td class="py-2 px-3 font-bold">${submission.total_score != null ? `${submission.total_score}/${submission.max_score ?? "?"}` : "-"}</td>
+        <td class="py-2 px-3">${window.AppUI.renderStatus(submission.grading_status || "published")}</td>
+        <td class="py-2 px-3">${formatDateTime(submission.graded_at)}</td>
         <td class="py-2 px-3">
           <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" data-student-detail="${submission.id}">Xem chi tiet</button>
         </td>
       </tr>
-    `).join("") || '<tr><td colspan="7">Khong tim thay ket qua da cong bo.</td></tr>';
+    `).join("") || '<tr><td colspan="7" class="py-3 px-3 text-slate-400">Khong tim thay ket qua da cong bo.</td></tr>';
 
     document.querySelectorAll("[data-student-detail]").forEach((button) => {
       button.addEventListener("click", () => {

@@ -66,6 +66,7 @@
       { value: "extracted", label: "extracted" },
       { value: "grading", label: "grading" },
       { value: "graded", label: "graded" },
+      { value: "regrade", label: "regrade" },
       { value: "published", label: "published" },
       { value: "failed", label: "failed" }
     ];
@@ -113,6 +114,7 @@
 
       warning: "bg-amber-50 text-amber-800 border-amber-200",
       recheck: "bg-amber-50 text-amber-800 border-amber-200",
+      regrade: "bg-amber-50 text-amber-800 border-amber-200",
 
       failed: "bg-red-50 text-red-700 border-red-200",
       rejected: "bg-red-50 text-red-700 border-red-200"

@@ -90,6 +90,22 @@ function forwardExamToN8n(questionFile, answerFile, body) {
   });
 }
 
+// Public endpoint - no auth required (for student submission page)
+router.get('/public', async (_request, response, next) => {
+  try {
+    const result = await query(`
+      SELECT id, exam_code, title, class_code, subject_code, subject_name, exam_type, exam_round, status
+      FROM exams
+      WHERE status NOT IN ('archived')
+      ORDER BY created_at DESC
+      LIMIT 200
+    `);
+    response.json({ success: true, data: result.rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/', requireAuth, async (request, response, next) => {
   try {
     const questionFile = request.files?.question_file?.[0];
@@ -509,23 +525,22 @@ router.get('/:id/submissions', requireAuth, async (request, response, next) => {
         gr.ai_confidence,
         gr.grading_detail,
         gr.general_feedback,
-        gr.notes,
         gr.graded_at,
         gr.review_status,
         gr.published_at,
         gr.reviewed_by,
         gr.reviewed_at,
         gr.grading_type,
-        gr.grading_attempt,
+        gr.attempt_no,
         gr.status AS grading_status
       FROM submissions s
       LEFT JOIN exams e ON e.id = s.exam_id
       LEFT JOIN LATERAL (
-        SELECT id, total_score, max_score, ai_confidence, grading_detail, general_feedback, notes,
-               graded_at, review_status, published_at, reviewed_by, reviewed_at, grading_type, grading_attempt, status
+        SELECT id, total_score, max_score, ai_confidence, grading_detail, general_feedback,
+               graded_at, review_status, published_at, reviewed_by, reviewed_at, grading_type, attempt_no, status
         FROM grading_results
         WHERE submission_id = s.id
-        ORDER BY grading_attempt DESC
+        ORDER BY attempt_no DESC
         LIMIT 1
       ) gr ON true
       WHERE s.exam_id = $1

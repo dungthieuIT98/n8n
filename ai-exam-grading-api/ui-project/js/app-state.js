@@ -1,7 +1,7 @@
 (function () {
   const USER_KEY = "ai-exam-grading-current-teacher";
   const TOKEN_KEY = "ai-exam-grading-auth-token";
-  const PROTECTED_PAGES = new Set(["dashboard", "upload", "exams", "results", "logs", "admin"]);
+  const PROTECTED_PAGES = new Set(["dashboard", "upload", "exams", "results", "logs", "admin", "grading-result"]);
 
   function getCurrentTeacher() {
     const raw = localStorage.getItem(USER_KEY);

@@ -58,24 +58,32 @@
                   <div class="text-sm font-semibold text-slate-700">Ma lop</div>
                   <input id="class-code" type="text" name="class_code" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="12A1" required>
                 </label>
-                <label class="block">
+                <div class="block">
                   <div class="text-sm font-semibold text-slate-700">Bai thi</div>
-                  <select id="exam-id" name="exam_id" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" required>
-                    <option value="">Chon bai thi</option>
-                  </select>
-                </label>
+                  <!-- hidden input carries the value for form submission -->
+                  <input type="hidden" id="exam-id" name="exam_id">
+                  <!-- custom searchable dropdown -->
+                  <div id="exam-dropdown" class="relative mt-1">
+                    <button type="button" id="exam-dropdown-btn"
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-left text-sm flex items-center justify-between gap-2 focus:outline-none focus:ring-2 focus:ring-slate-900/20">
+                      <span id="exam-dropdown-label" class="truncate text-slate-400">Chon bai thi</span>
+                      <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="exam-dropdown-panel" class="hidden absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg">
+                      <!-- filter row -->
+                      <div class="p-2 border-b border-slate-100 grid grid-cols-3 gap-1.5">
+                        <input id="filter-class" type="text" placeholder="Lop" class="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+                        <input id="filter-subject" type="text" placeholder="Mon" class="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+                        <input id="filter-type" type="text" placeholder="Loai" class="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+                      </div>
+                      <ul id="exam-dropdown-list" class="max-h-52 overflow-y-auto py-1 text-sm"></ul>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">ID bai thi</div>
-                  <input id="exam-id-display" type="text" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-slate-50" placeholder="Tu dong theo bai thi da chon" readonly>
-                </label>
-                <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">Ma mon</div>
-                  <input id="subject-code-input" type="text" name="subject_code" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-slate-50" placeholder="TOAN" readonly required>
-                </label>
-              </div>
+              <input id="exam-id-display" type="hidden">
+              <input id="subject-code-input" type="hidden" name="subject_code">
 
               <div id="exam-info-display" class="hidden">
                 <div class="rounded-2xl border border-slate-200 p-4 grid grid-cols-2 gap-3">
@@ -121,7 +129,7 @@
                 <div>Moi lan nop tuong ung 1 bai thi va 1 file.</div>
               </div>
               <div id="upload-message"></div>
-              <button type="submit" form="submission-form" class="w-full px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold">Nop bai lam</button>
+              <button id="submit-btn" type="submit" form="submission-form" class="w-full px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold disabled:opacity-50">Nop bai lam</button>
             </div>
           </aside>
         </section>

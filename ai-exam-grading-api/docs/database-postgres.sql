@@ -76,57 +76,78 @@ ALTER TABLE IF EXISTS exams ADD COLUMN IF NOT EXISTS class_id INT REFERENCES cla
 ALTER TABLE IF EXISTS exams ADD COLUMN IF NOT EXISTS subject_id INT REFERENCES subjects(id) ON DELETE SET NULL;
 ALTER TABLE IF EXISTS exams ADD COLUMN IF NOT EXISTS exam_period_id INT REFERENCES exam_periods(id) ON DELETE SET NULL;
 
-CREATE TABLE IF NOT EXISTS submissions (
-  id                  SERIAL PRIMARY KEY,
-  exam_id             INT REFERENCES exams(id) ON DELETE CASCADE,
-  student_code        TEXT,
-  student_name        TEXT,
-  class_code          TEXT,
-  subject_code        TEXT,
-  submission_file_path TEXT,
-  submission_extract  JSONB,
-  submitted_at        TIMESTAMPTZ DEFAULT NOW(),
-  status              TEXT DEFAULT 'uploaded',
-  created_at          TIMESTAMPTZ DEFAULT NOW(),
-  updated_at          TIMESTAMPTZ DEFAULT NOW()
-);
+  CREATE TABLE IF NOT EXISTS submissions (
+    id                  SERIAL PRIMARY KEY,
+    exam_id             INT REFERENCES exams(id) ON DELETE CASCADE,
+    student_code        TEXT,
+    student_name        TEXT,
+    class_code          TEXT,
+    subject_code        TEXT,
+    submission_file_path TEXT,
+    submission_extract  JSONB,
+    submitted_at        TIMESTAMPTZ DEFAULT NOW(),
+    status              TEXT DEFAULT 'uploaded',
+    created_at          TIMESTAMPTZ DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ DEFAULT NOW()
+  );
 
 CREATE TABLE IF NOT EXISTS grading_results (
-  id             SERIAL PRIMARY KEY,
-  submission_id  INT REFERENCES submissions(id) ON DELETE CASCADE,
-  exam_id        INT REFERENCES exams(id) ON DELETE CASCADE,
-  exam_code      TEXT,
-  exam_title     TEXT,
-  class_code     TEXT,
-  subject_code   TEXT,
-  student_code   TEXT,
-  student_name   TEXT,
-  grading_attempt INT DEFAULT 1,
-  grading_type   TEXT,
-  total_score    NUMERIC,
-  max_score      NUMERIC,
-  ai_confidence  NUMERIC,
-  grading_detail JSONB,
+  id               SERIAL PRIMARY KEY,
+
+  -- liên kết chính
+  submission_id    INT NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
+
+  -- thông tin lần chấm
+  attempt_no       INT DEFAULT 1,
+  grading_type     TEXT, -- ai/manual/auto
+
+  -- kết quả
+  total_score      NUMERIC,
+  max_score        NUMERIC,
+  ai_confidence    NUMERIC,
+  grading_detail   JSONB,
   general_feedback TEXT,
-  notes          TEXT,
-  graded_by      INT,
-  graded_by_name TEXT,
-  graded_at      TIMESTAMPTZ DEFAULT NOW(),
-  reviewed_by    INT,
-  reviewed_at    TIMESTAMPTZ,
-  review_status  TEXT,
-  review_notes   TEXT,
-  status         TEXT DEFAULT 'completed',
-  error_message  TEXT,
-  published_at   TIMESTAMPTZ,
-  created_by     INT,
-  updated_by     INT,
-  created_at     TIMESTAMPTZ DEFAULT NOW(),
-  updated_at     TIMESTAMPTZ DEFAULT NOW()
+
+  -- trạng thái
+  status           TEXT DEFAULT 'graded', -- graded / error / pending
+  error_message    TEXT,
+
+  -- người chấm
+  graded_by        INT,
+  graded_by_name   TEXT,
+  graded_at        TIMESTAMPTZ DEFAULT NOW(),
+
+  -- review (nếu có)
+  reviewed_by      INT,
+  reviewed_at      TIMESTAMPTZ,
+  review_status    TEXT, -- approved / rejected
+  review_notes     TEXT,
+
+  -- publish
+  published_at     TIMESTAMPTZ,
+
+  -- audit
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS grading_results_submission_attempt_idx
-  ON grading_results(submission_id, grading_attempt DESC);
+  ON grading_results(submission_id, attempt_no DESC);
+
+-- Migration (nếu bảng cũ đã tồn tại):
+-- ALTER TABLE grading_results RENAME COLUMN grading_attempt TO attempt_no;
+-- ALTER TABLE grading_results ALTER COLUMN submission_id SET NOT NULL;
+-- ALTER TABLE grading_results ALTER COLUMN status SET DEFAULT 'graded';
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS exam_id;
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS exam_code;
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS exam_title;
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS class_code;
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS subject_code;
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS student_code;
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS student_name;
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS notes;
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS created_by;
+-- ALTER TABLE grading_results DROP COLUMN IF EXISTS updated_by;
 
 CREATE TABLE IF NOT EXISTS system_logs (
   id                   SERIAL PRIMARY KEY,

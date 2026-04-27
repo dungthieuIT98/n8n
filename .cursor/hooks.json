@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "type": "prompt",
+        "matcher": "Write|StrReplace|EditNotebook",
+        "prompt": "A source file was just edited. If the edited file is a JavaScript (.js) or HTML (.html) file in the project, you MUST now verify the change works correctly. Do one or more of the following as appropriate:\n1. Run `node --check <file>` to verify syntax is valid.\n2. If the dev server is running (npm run dev), check the terminal output for errors.\n3. If an API endpoint was changed, test it with curl or by describing the expected behavior.\n4. If a UI file was changed, describe what the user should see in the browser.\nAlways report what you verified and the result. Do NOT skip this step.\n\nHook input: $ARGUMENTS"
+      }
+    ]
+  }
+}

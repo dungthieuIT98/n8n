@@ -12,6 +12,7 @@ const examsRoutes = require('./routes/exams');
 const { router: submissionsRoutes, studentResultsHandler } = require('./routes/submissions');
 const logsRoutes = require('./routes/logs');
 const entitiesRoutes = require('./routes/entities');
+const gradingRoutes = require('./routes/grading');
 
 async function ensureUploadsFolder() {
   const fs = require('node:fs/promises');
@@ -138,6 +139,7 @@ async function startServer() {
   ]), examsRoutes);
   app.use('/api/submissions', upload.single('submission_file'), submissionsRoutes);
   app.use('/api/logs', logsRoutes);
+  app.use('/api/grading', gradingRoutes);
   app.get('/api/student-results', studentResultsHandler);
   app.use('/api', entitiesRoutes);
 

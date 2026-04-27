@@ -107,6 +107,10 @@
     return request(`/api/student-results${buildQuery(params)}`);
   }
 
+  function publicExams() {
+    return request('/api/exams/public');
+  }
+
   function submitExamSubmission(formData) {
     return request('/api/submissions', {
       method: 'POST',
@@ -116,6 +120,22 @@
 
   function resetDemoData() {
     return request('/api/admin/reset-demo-data', { method: 'POST' });
+  }
+
+  function getSubmissionResult(submissionId) {
+    return request(`/api/submissions/${submissionId}/result`);
+  }
+
+  function updateGrading(gradingId, body) {
+    return request(`/api/grading/${gradingId}`, { method: 'PUT', body });
+  }
+
+  function deleteGrading(gradingId) {
+    return request(`/api/grading/${gradingId}`, { method: 'DELETE' });
+  }
+
+  function regradeGrading(submissionId) {
+    return request(`/api/grading/${submissionId}/regrade`, { method: 'POST' });
   }
 
   window.AppApi = {
@@ -131,7 +151,12 @@
     approveSubmission,
     retryLog,
     studentResults,
+    publicExams,
     submitExamSubmission,
-    resetDemoData
+    resetDemoData,
+    getSubmissionResult,
+    updateGrading,
+    deleteGrading,
+    regradeGrading
   };
 })();

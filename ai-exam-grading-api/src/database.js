@@ -51,30 +51,35 @@ const ENTITY_CONFIG = {
       's.submission_file_path', 's.submission_extract', 's.submitted_at',
       's.status', 's.created_at', 's.updated_at',
       'gr.id AS grading_result_id', 'gr.total_score', 'gr.max_score', 'gr.ai_confidence',
-      'gr.grading_detail', 'gr.general_feedback', 'gr.notes', 'gr.graded_at',
+      'gr.grading_detail', 'gr.general_feedback', 'gr.review_notes AS notes', 'gr.graded_at',
       'gr.review_status', 'gr.published_at', 'gr.reviewed_by', 'gr.reviewed_at',
-      'gr.grading_type', 'gr.grading_attempt', 'gr.status AS grading_status'
+      'gr.grading_type', 'gr.attempt_no', 'gr.status AS grading_status'
     ],
     joins: [
       'LEFT JOIN exams e ON e.id = s.exam_id',
-      'LEFT JOIN LATERAL (SELECT id, total_score, max_score, ai_confidence, grading_detail, general_feedback, notes, graded_at, review_status, published_at, reviewed_by, reviewed_at, grading_type, grading_attempt, status FROM grading_results WHERE submission_id = s.id ORDER BY grading_attempt DESC LIMIT 1) gr ON true'
+      'LEFT JOIN LATERAL (SELECT id, total_score, max_score, ai_confidence, grading_detail, general_feedback, review_notes, graded_at, review_status, published_at, reviewed_by, reviewed_at, grading_type, attempt_no, status FROM grading_results WHERE submission_id = s.id ORDER BY attempt_no DESC LIMIT 1) gr ON true'
     ]
   },
   grading_results: {
     table: 'grading_results',
     alias: 'gr',
     orderBy: 'gr.graded_at DESC, gr.id DESC',
-    searchColumns: ['gr.student_code', 'gr.student_name', 'gr.class_code', 'gr.exam_code', 'gr.exam_title'],
-    filterColumns: ['status', 'review_status', 'exam_id', 'submission_id', 'student_code', 'class_code', 'grading_type'],
+    searchColumns: ['s.student_code', 's.student_name', 's.class_code', 'e.exam_code', 'e.title'],
+    filterColumns: ['status', 'review_status', { name: 'exam_id', column: 'e.id' }, 'submission_id', { name: 'class_code', column: 's.class_code' }, 'grading_type'],
     select: [
-      'gr.id', 'gr.submission_id', 'gr.exam_id', 'gr.exam_code', 'gr.exam_title',
-      'gr.class_code', 'gr.subject_code', 'gr.student_code', 'gr.student_name',
-      'gr.grading_attempt', 'gr.grading_type', 'gr.total_score', 'gr.max_score',
-      'gr.ai_confidence', 'gr.grading_detail', 'gr.general_feedback', 'gr.notes',
+      'gr.id', 'gr.submission_id', 'gr.attempt_no', 'gr.grading_type',
+      'gr.total_score', 'gr.max_score', 'gr.ai_confidence',
+      'gr.grading_detail', 'gr.general_feedback', 'gr.review_notes',
       'gr.graded_by', 'gr.graded_by_name', 'gr.graded_at',
-      'gr.reviewed_by', 'gr.reviewed_at', 'gr.review_status', 'gr.review_notes',
+      'gr.reviewed_by', 'gr.reviewed_at', 'gr.review_status',
       'gr.status', 'gr.error_message', 'gr.published_at',
-      'gr.created_at', 'gr.updated_at'
+      'gr.created_at', 'gr.updated_at',
+      's.student_code', 's.student_name', 's.class_code', 's.subject_code',
+      'e.id AS exam_id', 'e.exam_code', 'e.title AS exam_title', 'e.teacher_id'
+    ],
+    joins: [
+      'LEFT JOIN submissions s ON s.id = gr.submission_id',
+      'LEFT JOIN exams e ON e.id = s.exam_id'
     ]
   },
   system_logs: {
