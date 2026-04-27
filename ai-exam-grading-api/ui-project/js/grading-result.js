@@ -77,8 +77,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const fileEl = $('s-file-link');
     if (submission.submission_file_path) {
-      const filename = submission.submission_file_path.split('/').pop().split('\\').pop();
-      fileEl.innerHTML = `<a href="/uploads/submissions/${filename}" target="_blank"
+      const filename = submission.submission_file_path.split('/').pop();
+      fileEl.innerHTML = `<a href="${submission.submission_file_path}" target="_blank"
         class="text-blue-600 hover:underline text-sm">${filename}</a>`;
     } else {
       fileEl.textContent = 'Khong co file';

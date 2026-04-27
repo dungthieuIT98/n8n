@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (btn.dataset.downloadSubmission) {
         const submission = submissions.find((item) => String(item.id) === String(btn.dataset.downloadSubmission));
         if (submission) {
-          window.alert(`Tai file bai nop: ${submission.submission_file_path || "Chua co duong dan file"}`);
+          window.open(submission.submission_file_path || '', '_blank');
         }
         return;
       }
@@ -305,7 +305,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const conf = Number(s.ai_confidence ?? 0);
       const hasGrading = s.grading_result_id != null && !["pending", "processing", "failed"].includes(s.grading_status);
-      const fileName = s.submission_file_path ? s.submission_file_path.split(/[\\/]/).pop() : null;
+      const fileUrl = s.submission_file_path || null;
+      const fileName = fileUrl ? fileUrl.split('/').pop() : null;
 
       document.getElementById("result-detail-content").innerHTML = `<div class="space-y-5">
 
@@ -329,8 +330,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           ${field("Cap nhat", formatDateTime(s.updated_at))}
           <div class="sm:col-span-4">
             <div class="text-xs text-slate-500 mb-0.5">File bai lam (submission_file_path)</div>
-            ${fileName
-              ? `<a href="/uploads/submissions/${fileName}" target="_blank" class="text-blue-600 hover:underline text-sm font-semibold">${fileName}</a>`
+            ${fileUrl
+              ? `<a href="${fileUrl}" target="_blank" class="text-blue-600 hover:underline text-sm font-semibold">${fileName}</a>`
               : '<span class="text-slate-400 text-sm">Chua co file</span>'}
           </div>
         </div>

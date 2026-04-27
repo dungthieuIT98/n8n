@@ -172,3 +172,4 @@ CREATE TABLE IF NOT EXISTS system_logs (
   updated_at            TIMESTAMPTZ DEFAULT NOW()
 );
 
+

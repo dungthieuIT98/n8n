@@ -3,6 +3,7 @@ const FormData = require('form-data');
 const fs = require('node:fs');
 const http = require('node:http');
 const https = require('node:https');
+const path = require('node:path');
 const { URL } = require('node:url');
 
 const config = require('../config');
@@ -158,7 +159,7 @@ router.post('/', async (request, response, next) => {
       String(body.student_name || '').trim(),
       String(body.class_code || '').trim(),
       String(body.subject_code || '').trim(),
-      file.path
+      path.relative(path.dirname(config.paths.uploads), file.path).replace(/\\/g, '/')
     ]);
 
     const submissionId = submissionResult.rows[0].id;

@@ -190,7 +190,7 @@
 
         <div class="rounded-2xl border border-slate-200 p-4 text-sm space-y-2">
           <div><span class="font-semibold">De thi:</span> ${submission.exam_code || "-"}</div>
-          <div><span class="font-semibold">File bai nop:</span> ${submission.submission_file_path || "-"}</div>
+          <div><span class="font-semibold">File bai nop:</span> ${submission.submission_file_path ? `<a href="${submission.submission_file_path}" target="_blank" class="text-blue-600 hover:underline">${submission.submission_file_path.split('/').pop()}</a>` : "-"}</div>
           <div><span class="font-semibold">Ket qua JSON:</span> ${submission.grading_result_file_path || "-"}</div>
           <div><span class="font-semibold">Ghi chu:</span> ${submission.notes || "Khong co"}</div>
         </div>
@@ -198,6 +198,12 @@
         <div class="space-y-3">${renderQuestionList(submission.questions || [])}</div>
       </div>
     `;
+  }
+
+  function fileUrl(filePath) {
+    if (!filePath) return null;
+    if (/^https?:\/\//i.test(filePath)) return filePath;
+    return '/' + filePath.replace(/\\/g, '/').replace(/^\//, '');
   }
 
   function downloadCsv(fileName, text) {

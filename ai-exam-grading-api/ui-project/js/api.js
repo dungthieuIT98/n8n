@@ -33,6 +33,12 @@
     const response = await fetch(url, requestOptions);
     const payload = await response.json().catch(() => ({}));
 
+    if (response.status === 401) {
+      window.AppState.clearSession();
+      window.location.href = "login.html";
+      throw new Error("Session expired. Please log in again.");
+    }
+
     if (!response.ok) {
       throw new Error(payload.message || `Request failed with status ${response.status}`);
     }

@@ -2,6 +2,7 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 
 const sessions = new Map();
+const SESSION_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 function parseId(rawId) {
   const id = Number(rawId);
@@ -71,25 +72,25 @@ function decorateSubmission(row) {
 
 function createAuthToken(teacher) {
   const token = crypto.randomUUID();
-  sessions.set(token, {
-    token,
-    teacher,
-    createdAt: new Date().toISOString()
-  });
+  sessions.set(token, { token, teacher, expiresAt: Date.now() + SESSION_TTL_MS });
   return token;
 }
 
 function getSessionFromRequest(request) {
   const authorization = request.headers.authorization || '';
   const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
-  return token ? sessions.get(token) : null;
+  if (!token) return null;
+  const session = sessions.get(token);
+  if (!session) return null;
+  if (Date.now() > session.expiresAt) {
+    sessions.delete(token);
+    return null;
+  }
+  return session;
 }
 
 function destroySessionToken(token) {
-  if (!token) {
-    return false;
-  }
-
+  if (!token) return false;
   return sessions.delete(token);
 }
 
@@ -99,7 +100,6 @@ function requireAuth(request, response, next) {
     response.status(401).json({ ok: false, message: 'Unauthorized' });
     return;
   }
-
   request.session = session;
   next();
 }
