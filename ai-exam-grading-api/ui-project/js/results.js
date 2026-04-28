@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", async () => {
   window.AppLayout.init();
 
+  const PAGE_SIZE = 10;
+  let currentPage = 1;
+
   let submissions = [];
   let currentFilteredRows = [];
   let selectedSubmissionId = null;
@@ -54,10 +57,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       : 0;
 
     summaryCards.innerHTML = [
-      { label: "Tong bai nop", value: total, hint: "So bai nop dang co trong tap du lieu hien tai." },
-      { label: "Da cong bo", value: published, hint: "San sang de sinh vien tra cuu ket qua." },
-      { label: "Can xu ly", value: needsAttention, hint: "Bai dang recheck, failed hoac can giao vien xem lai." },
-      { label: "Do tin cay TB", value: `${averageConfidence}%`, hint: "Trung binh confidence AI tren tap ket qua dang hien thi." }
+      { label: "Tổng bài nộp", value: total, hint: "Số bài nộp đang có trong tập dữ liệu hiện tại." },
+      { label: "Đã công bố", value: published, hint: "Sẵn sàng để sinh viên tra cứu kết quả." },
+      { label: "Cần xử lý", value: needsAttention, hint: "Bài đang recheck, failed hoặc cần giáo viên xem lại." },
+      { label: "Độ tin cậy TB", value: `${averageConfidence}%`, hint: "Trung bình độ tin cậy AI trên tập kết quả đang hiển thị." }
     ].map((card) => `
       <article class="rounded-2xl border border-slate-200 p-4 bg-white">
         <div class="text-xs font-semibold text-slate-500">${card.label}</div>
@@ -70,7 +73,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderFocusCard(submission) {
     if (!focusCard) return;
     if (!submission) {
-      focusCard.innerHTML = '<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Chon mot bai nop trong bang de hien thong tin nhanh.</div>';
+      focusCard.innerHTML = '<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Chọn một bài nộp trong bảng để hiện thông tin nhanh.</div>';
       return;
     }
 
@@ -84,21 +87,21 @@ document.addEventListener("DOMContentLoaded", async () => {
           ${renderBadge(submission.status)}
         </div>
         <div class="grid grid-cols-2 gap-2 text-sm">
-          <div><div class="text-xs font-semibold text-slate-500">Mon hoc</div><div class="font-semibold">${submission.subject_name || "-"}</div></div>
-          <div><div class="text-xs font-semibold text-slate-500">Loai bai</div><div class="font-semibold">${submission.exam_type || "-"}</div></div>
-          <div><div class="text-xs font-semibold text-slate-500">Tong diem</div><div class="font-semibold">${submission.total_score || 0}/${submission.max_score || "-"}</div></div>
-          <div><div class="text-xs font-semibold text-slate-500">AI confidence</div><div class="font-semibold">${submission.ai_confidence ? `${submission.ai_confidence}%` : "-"}</div></div>
+          <div><div class="text-xs font-semibold text-slate-500">Môn học</div><div class="font-semibold">${submission.subject_name || "-"}</div></div>
+          <div><div class="text-xs font-semibold text-slate-500">Loại bài</div><div class="font-semibold">${submission.exam_type || "-"}</div></div>
+          <div><div class="text-xs font-semibold text-slate-500">Tổng điểm</div><div class="font-semibold">${submission.total_score || 0}/${submission.max_score || "-"}</div></div>
+          <div><div class="text-xs font-semibold text-slate-500">Độ tin cậy AI</div><div class="font-semibold">${submission.ai_confidence ? `${submission.ai_confidence}%` : "-"}</div></div>
         </div>
       </div>
       <div class="rounded-2xl border border-slate-200 overflow-hidden mb-3 text-sm">
-        <div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200"><span class="text-slate-600">De thi</span><span class="font-semibold text-right">${submission.exam_title || submission.exam_code || "-"}</span></div>
-        <div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200"><span class="text-slate-600">Phe duyet</span><span>${renderBadge(submission.review_status, "chua co")}</span></div>
-        <div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200"><span class="text-slate-600">Nop bai</span><span class="font-semibold text-right">${formatDateTime(submission.submitted_at)}</span></div>
-        <div class="flex items-center justify-between gap-3 px-3 py-2"><span class="text-slate-600">Cham xong</span><span class="font-semibold text-right">${formatDateTime(submission.graded_at)}</span></div>
+        <div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200"><span class="text-slate-600">Đề thi</span><span class="font-semibold text-right">${submission.exam_title || submission.exam_code || "-"}</span></div>
+        <div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200"><span class="text-slate-600">Phê duyệt</span><span>${renderBadge(submission.review_status, "chưa có")}</span></div>
+        <div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200"><span class="text-slate-600">Nộp bài</span><span class="font-semibold text-right">${formatDateTime(submission.submitted_at)}</span></div>
+        <div class="flex items-center justify-between gap-3 px-3 py-2"><span class="text-slate-600">Chấm xong</span><span class="font-semibold text-right">${formatDateTime(submission.graded_at)}</span></div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" type="button" data-view-submission="${submission.id}">Xem chi tiet</button>
-        <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" type="button" data-download-submission="${submission.id}">Tai bai</button>
+        <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" type="button" data-view-submission="${submission.id}">Xem chi tiết</button>
+        <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" type="button" data-download-submission="${submission.id}">Tải bài</button>
       </div>
     `;
   }
@@ -170,15 +173,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.AppUI.fillSelect(statusFilter, window.AppUI.submissionStatusOptions(), true);
 
   ["result-filter-class", "result-filter-subject", "result-filter-type", "result-filter-status"].forEach((id) => {
-    document.getElementById(id).addEventListener("change", renderPage);
+    document.getElementById(id).addEventListener("change", () => { currentPage = 1; renderPage(); });
   });
-  keywordFilter.addEventListener("input", renderPage);
+  keywordFilter.addEventListener("input", () => { currentPage = 1; renderPage(); });
   resetFiltersButton.addEventListener("click", () => {
     classFilter.value = "";
     subjectFilter.value = "";
     typeFilter.value = "";
     statusFilter.value = "";
     keywordFilter.value = "";
+    currentPage = 1;
     renderPage();
   });
 
@@ -226,7 +230,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // submissions.submission_extract — nội dung OCR/extract từ PDF bài làm (do n8n điền vào)
   function renderSubmissionExtract(extract) {
-    if (!extract) return '<span class="text-slate-400">Chua co du lieu trich xuat (chua qua workflow extract).</span>';
+    if (!extract) return '<span class="text-slate-400">Chưa có dữ liệu trích xuất (chưa qua workflow extract).</span>';
     const text = typeof extract === "string"
       ? extract
       : (extract.text || extract.content || extract.raw || JSON.stringify(extract, null, 2));
@@ -260,7 +264,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           ${q.feedback || q.explanation || q.comment ? `<div class="text-slate-600 text-xs leading-relaxed">${q.feedback || q.explanation || q.comment}</div>` : ""}
           ${rubricScores.length ? `
             <div class="mt-2 rounded-lg border border-slate-200 bg-white/60">
-              <div class="px-2 py-1 text-[11px] font-semibold text-slate-500 border-b border-slate-200">Rubric</div>
+              <div class="px-2 py-1 text-[11px] font-semibold text-slate-500 border-b border-slate-200">Thang điểm</div>
               <div class="divide-y divide-slate-200">
                 ${rubricScores.map((r) => {
                   const rEarned = Number(r.earned ?? 0);
@@ -289,15 +293,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ── Main modal ───────────────────────────────────────────────────────────────
 
   async function showSubmissionDetail(submissionId) {
-    document.getElementById("result-modal-title").textContent = "Dang tai...";
-    document.getElementById("result-detail-content").innerHTML = '<div class="text-sm text-slate-400 py-8 text-center">Dang tai du lieu...</div>';
+    document.getElementById("result-modal-title").textContent = "Đang tải...";
+    document.getElementById("result-detail-content").innerHTML = '<div class="text-sm text-slate-400 py-8 text-center">Đang tải dữ liệu...</div>';
     window.AppLayout.openModal("result-detail-modal");
 
     try {
       const result = await window.AppApi.detail("submissions", submissionId);
       const s = result.data;
       if (!s) {
-        document.getElementById("result-detail-content").innerHTML = '<div class="text-sm text-red-600">Khong tim thay bai nop.</div>';
+        document.getElementById("result-detail-content").innerHTML = '<div class="text-sm text-red-600">Không tìm thấy bài nộp.</div>';
         return;
       }
 
@@ -312,32 +316,32 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         <!-- submissions: thông tin sinh viên & bài thi -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          ${field("Ma sinh vien", s.student_code)}
-          ${field("Ho ten", s.student_name)}
-          ${field("Lop", s.class_code)}
-          ${field("Mon hoc", s.subject_code)}
-          ${field("Ma de thi", s.exam_code)}
-          ${field("Ten bai thi", s.exam_title)}
-          ${field("Loai bai thi", s.exam_type)}
-          ${field("Mon (exams)", s.subject_name)}
+          ${field("Mã sinh viên", s.student_code)}
+          ${field("Họ tên", s.student_name)}
+          ${field("Lớp", s.class_code)}
+          ${field("Môn học", s.subject_code)}
+          ${field("Mã đề thi", s.exam_code)}
+          ${field("Tên bài thi", s.exam_title)}
+          ${field("Loại bài thi", s.exam_type)}
+          ${field("Môn (exams)", s.subject_name)}
         </div>
 
         <!-- submissions: trạng thái & file -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
-          ${field("Trang thai nop", renderBadge(s.status))}
-          ${field("Thoi gian nop", formatDateTime(s.submitted_at))}
-          ${field("Tao luc", formatDateTime(s.created_at))}
-          ${field("Cap nhat", formatDateTime(s.updated_at))}
+          ${field("Trạng thái nộp", renderBadge(s.status))}
+          ${field("Thời gian nộp", formatDateTime(s.submitted_at))}
+          ${field("Tạo lúc", formatDateTime(s.created_at))}
+          ${field("Cập nhật", formatDateTime(s.updated_at))}
           <div class="sm:col-span-4">
-            <div class="text-xs text-slate-500 mb-0.5">File bai lam (submission_file_path)</div>
+            <div class="text-xs text-slate-500 mb-0.5">File bài làm (submission_file_path)</div>
             ${fileUrl
               ? `<a href="${fileUrl}" target="_blank" class="text-blue-600 hover:underline text-sm font-semibold">${fileName}</a>`
-              : '<span class="text-slate-400 text-sm">Chua co file</span>'}
+              : '<span class="text-slate-400 text-sm">Chưa có file</span>'}
           </div>
         </div>
 
         <!-- submissions.submission_extract: nội dung OCR/extract từ PDF (n8n điền) -->
-        ${sectionBlock("Noi dung bai lam — submission_extract", `
+        ${sectionBlock("Nội dung bài làm — submission_extract", `
           <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 max-h-60 overflow-y-auto text-sm leading-relaxed">
             ${renderSubmissionExtract(s.submission_extract)}
           </div>
@@ -346,18 +350,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         <!-- grading_results: kết quả chấm (lấy attempt cao nhất — do n8n workflow chấm) -->
         ${hasGrading ? `
           <div class="pt-3 border-t border-slate-100 space-y-4">
-            <div class="text-xs font-bold text-slate-500 uppercase tracking-wide">Ket qua cham — grading_results (attempt #${s.attempt_no ?? "-"})</div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wide">Kết quả chấm — grading_results (attempt #${s.attempt_no ?? "-"})</div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              ${field("Diem", s.total_score != null
+              ${field("Điểm", s.total_score != null
                 ? `<span class="text-2xl font-extrabold">${s.total_score}</span> <span class="text-slate-400 text-sm">/ ${s.max_score ?? "?"}</span>`
                 : "-")}
-              ${field("Loai cham", s.grading_type || "-")}
-              ${field("Trang thai", renderBadge(s.grading_status))}
-              ${field("Phe duyet", renderBadge(s.review_status, "chua co"))}
-              ${field("Cham xong", formatDateTime(s.graded_at))}
-              ${field("Duyet luc", formatDateTime(s.reviewed_at))}
-              ${field("Published", formatDateTime(s.published_at))}
+              ${field("Loại chấm", s.grading_type || "-")}
+              ${field("Trạng thái", renderBadge(s.grading_status))}
+              ${field("Phê duyệt", renderBadge(s.review_status, "chưa có"))}
+              ${field("Chấm xong", formatDateTime(s.graded_at))}
+              ${field("Duyệt lúc", formatDateTime(s.reviewed_at))}
+              ${field("Công bố", formatDateTime(s.published_at))}
               <div>
                 <div class="text-xs text-slate-500 mb-1">Do tin cay AI</div>
                 <div class="flex items-center gap-2">
@@ -389,21 +393,21 @@ document.addEventListener("DOMContentLoaded", async () => {
           </div>
         ` : `
           <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 mt-3">
-            Chua co ket qua cham. He thong dang xu ly hoac workflow cham bai chua chay.
+            Chưa có kết quả chấm. Hệ thống đang xử lý hoặc workflow chấm bài chưa chạy.
           </div>`}
 
         <!-- Actions -->
         <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
           ${hasGrading ? `<button class="px-3 py-2 rounded-lg border border-amber-200 text-amber-800 hover:bg-amber-50 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed" type="button" data-regrade-submission="${s.id}" ${s.status === "regrade" ? "disabled" : ""}>
-            ${s.status === "regrade" ? "Dang cho cham lai..." : "Cham lai"}
+            ${s.status === "regrade" ? "Đang chờ chấm lại..." : "Chấm lại"}
           </button>` : ""}
-          ${hasGrading ? `<button class="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-semibold" type="button" data-approve-submission="${s.id}">Phe duyet</button>` : ""}
+          ${hasGrading ? `<button class="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-semibold" type="button" data-approve-submission="${s.id}">Phê duyệt</button>` : ""}
         </div>
 
       </div>`;
 
     } catch (error) {
-      document.getElementById("result-detail-content").innerHTML = `<div class="text-sm text-red-600">Loi: ${error.message}</div>`;
+      document.getElementById("result-detail-content").innerHTML = `<div class="text-sm text-red-600">Lỗi: ${error.message}</div>`;
     }
   }
 
@@ -433,8 +437,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderSummary(currentFilteredRows);
     renderFocusCard(selectedSubmission);
 
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = currentFilteredRows.slice(start, start + PAGE_SIZE);
 
-    const rows = currentFilteredRows.map((submission) => {
+    const rows = pageRows.map((submission) => {
       const score = submission.total_score != null ? `${submission.total_score}/${submission.max_score ?? "?"}` : "-";
       const conf = submission.ai_confidence != null ? submission.ai_confidence : null;
       const isSelected = String(submission.id) === String(selectedSubmissionId);
@@ -463,15 +469,20 @@ document.addEventListener("DOMContentLoaded", async () => {
           <div class="flex flex-wrap gap-1.5">
             <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" type="button" data-view-submission="${submission.id}">Xem</button>
             ${hasGrading ? `<button class="px-2 py-1 rounded-lg border border-amber-200 text-amber-800 hover:bg-amber-50 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed" type="button" data-regrade-submission="${submission.id}" ${submission.status === "regrade" ? "disabled" : ""}>
-              ${submission.status === "regrade" ? "Dang cho cham lai..." : "Cham lai"}
+              ${submission.status === "regrade" ? "Đang chờ chấm lại..." : "Chấm lại"}
             </button>` : ""}
-            ${hasGrading ? `<button class="px-2 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold" type="button" data-approve-submission="${submission.id}">Phe duyet</button>` : `<span class="px-2 py-1 text-xs text-slate-400 italic">Chua cham</span>`}
+            ${hasGrading ? `<button class="px-2 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold" type="button" data-approve-submission="${submission.id}">Phê duyệt</button>` : `<span class="px-2 py-1 text-xs text-slate-400 italic">Chưa chấm</span>`}
           </div>
         </td>
       </tr>`;
     }).join("");
 
-    document.getElementById("result-table-body").innerHTML = rows || '<tr><td colspan="5" class="py-6 px-3 text-center text-slate-400">Khong co ket qua phu hop bo loc.</td></tr>';
+    document.getElementById("result-table-body").innerHTML = rows || '<tr><td colspan="5" class="py-6 px-3 text-center text-slate-400">Không có kết quả phù hợp bộ lọc.</td></tr>';
+
+    window.AppUI.renderPagination("result-pagination", currentFilteredRows.length, currentPage, PAGE_SIZE, (p) => {
+      currentPage = p;
+      renderPage();
+    });
 
     document.querySelectorAll("[data-select-submission]").forEach((row) => {
       row.addEventListener("click", (event) => {

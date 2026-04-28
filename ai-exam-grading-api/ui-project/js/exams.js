@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let subjectsByCode = new Map();
   let masterDataLoaded = false;
 
+  const titleFilter = document.getElementById("exam-filter-title");
   const classFilter = document.getElementById("exam-filter-class");
   const subjectFilter = document.getElementById("exam-filter-subject");
   const typeFilter = document.getElementById("exam-filter-type");
@@ -25,10 +26,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
+  let titleDebounceTimer = null;
+  titleFilter?.addEventListener("input", () => {
+    clearTimeout(titleDebounceTimer);
+    titleDebounceTimer = setTimeout(() => {
+      currentPage = 1;
+      applyFilters();
+    }, 250);
+  });
+  titleFilter?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      currentPage = 1;
+      applyFilters();
+    }
+    if (e.key === "Escape") {
+      titleFilter.value = "";
+      currentPage = 1;
+      applyFilters();
+    }
+  });
+
   function formatDate(dateStr) {
     if (!dateStr) return "-";
     const d = new Date(dateStr);
     return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  }
+
+  function normalizeText(value) {
+    return String(value || "").trim().toLowerCase();
   }
 
   function applyFilters() {
@@ -36,9 +62,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const subjectCode = subjectFilter.value;
     const examType = typeFilter.value;
     const status = statusFilter.value;
+    const titleQuery = normalizeText(titleFilter?.value);
 
     filteredExams = allExams.filter((exam) => (
-      (!classCode || exam.class_code === classCode)
+      (!titleQuery || normalizeText(exam.title).includes(titleQuery))
+      && (!classCode || exam.class_code === classCode)
       && (!subjectCode || exam.subject_code === subjectCode)
       && (!examType || exam.exam_type === examType)
       && (!status || exam.status === status)
@@ -54,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!pageExams.length) {
       document.getElementById("exam-table-body").innerHTML = `
-        <tr><td colspan="5" class="py-8 px-3 text-center text-slate-400 text-sm">Khong co de thi phu hop bo loc.</td></tr>
+        <tr><td colspan="5" class="py-8 px-3 text-center text-slate-400 text-sm">Không có đề thi phù hợp bộ lọc.</td></tr>
       `;
       return;
     }
@@ -74,8 +102,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td class="py-2.5 px-3 whitespace-nowrap">
           <div class="flex items-center gap-1.5">
             <button class="px-2.5 py-1 rounded-lg border border-slate-300 hover:bg-slate-100 text-xs font-semibold transition-colors" data-view-exam="${exam.id}">Xem</button>
-            <button class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold transition-colors" data-edit-exam="${exam.id}">Sua</button>
-            <button class="px-2.5 py-1 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs font-semibold transition-colors" data-delete-exam="${exam.id}">Xoa</button>
+            <button class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold transition-colors" data-edit-exam="${exam.id}">Sửa</button>
+            <button class="px-2.5 py-1 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs font-semibold transition-colors" data-delete-exam="${exam.id}">Xóa</button>
           </div>
         </td>
       </tr>
@@ -97,7 +125,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pag = document.getElementById("exam-pagination");
 
     if (totalPages <= 1) {
-      pag.innerHTML = `<span class="text-xs text-slate-500">${filteredExams.length} de thi</span>`;
+      pag.innerHTML = `<span class="text-xs text-slate-500">${filteredExams.length} đề thi</span>`;
       return;
     }
 
@@ -118,9 +146,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     pag.innerHTML = `
-      <span class="text-xs text-slate-500">${filteredExams.length} de thi &middot; Trang ${currentPage}/${totalPages}</span>
+      <span class="text-xs text-slate-500">${filteredExams.length} đề thi &middot; Trang ${currentPage}/${totalPages}</span>
       <div class="flex items-center gap-1 flex-wrap">
-        <button ${currentPage === 1 ? "disabled" : ""} id="pag-prev" class="px-2.5 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">&#8249; Truoc</button>
+        <button ${currentPage === 1 ? "disabled" : ""} id="pag-prev" class="px-2.5 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">&#8249; Trước</button>
         ${withEllipsis.map((p) => p === "..." ? `<span class="px-1 text-xs text-slate-400">...</span>` : `
           <button class="px-2.5 py-1 rounded-lg border text-xs font-semibold ${p === currentPage ? "bg-slate-900 text-white border-slate-900" : "border-slate-300 hover:bg-slate-50"}" data-page="${p}">${p}</button>
         `).join("")}
@@ -164,8 +192,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ── Detail Modal ───────────────────────────────────────────────────────────
   async function showDetail(examId) {
-    document.getElementById("exam-modal-title").textContent = "Dang tai...";
-    document.getElementById("exam-detail-content").innerHTML = `<p class="text-sm text-slate-400">Dang tai du lieu...</p>`;
+    document.getElementById("exam-modal-title").textContent = "Đang tải...";
+    document.getElementById("exam-detail-content").innerHTML = `<p class="text-sm text-slate-400">Đang tải dữ liệu...</p>`;
     openModal("exam-detail-modal");
 
     try {
@@ -177,53 +205,53 @@ document.addEventListener("DOMContentLoaded", async () => {
         <div class="space-y-4">
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div class="rounded-xl border border-slate-200 p-3">
-              <div class="text-xs font-semibold text-slate-500">Ma de thi</div>
+              <div class="text-xs font-semibold text-slate-500">Mã đề thi</div>
               <div class="font-bold text-sm mt-0.5">${exam.exam_code}</div>
             </div>
             <div class="rounded-xl border border-slate-200 p-3">
-              <div class="text-xs font-semibold text-slate-500">Phien ban</div>
+              <div class="text-xs font-semibold text-slate-500">Phiên bản</div>
               <div class="font-bold text-sm mt-0.5">v${exam.version}</div>
             </div>
             <div class="rounded-xl border border-slate-200 p-3">
-              <div class="text-xs font-semibold text-slate-500">Trang thai</div>
+              <div class="text-xs font-semibold text-slate-500">Trạng thái</div>
               <div class="mt-0.5">${window.AppUI.renderStatus(exam.status)}</div>
             </div>
             <div class="rounded-xl border border-slate-200 p-3">
-              <div class="text-xs font-semibold text-slate-500">Lop / Mon</div>
+              <div class="text-xs font-semibold text-slate-500">Lớp / Môn</div>
               <div class="font-bold text-sm mt-0.5 truncate" title="${exam.class_code} / ${exam.subject_name || exam.subject_code}">${exam.class_code} / ${exam.subject_name || exam.subject_code}</div>
             </div>
             <div class="rounded-xl border border-slate-200 p-3">
-              <div class="text-xs font-semibold text-slate-500">Loai / Dot</div>
+              <div class="text-xs font-semibold text-slate-500">Loại / Đợt</div>
               <div class="font-bold text-sm mt-0.5">${exam.exam_type} / ${exam.exam_round}</div>
             </div>
             <div class="rounded-xl border border-slate-200 p-3">
-              <div class="text-xs font-semibold text-slate-500">Nguoi tao</div>
+              <div class="text-xs font-semibold text-slate-500">Người tạo</div>
               <div class="font-bold text-sm mt-0.5 truncate" title="${exam.teacher_name}">${exam.teacher_name}</div>
             </div>
           </div>
 
           <div class="rounded-xl border border-slate-200 p-3 text-sm">
-            <div class="font-semibold mb-1">Mo ta</div>
-            <div class="text-slate-600">${exam.description || "Chua co mo ta"}</div>
+            <div class="font-semibold mb-1">Mô tả</div>
+            <div class="text-slate-600">${exam.description || "Chưa có mô tả"}</div>
           </div>
 
           <div class="rounded-xl border border-slate-200 p-3 text-sm">
             <div class="font-semibold mb-2">File</div>
             <div class="space-y-1 text-slate-600 text-xs">
-              <div><span class="font-semibold text-slate-800">De thi:</span> ${exam.question_file_path || "-"}</div>
-              <div><span class="font-semibold text-slate-800">Dap an:</span> ${exam.answer_file_path || "-"}</div>
+              <div><span class="font-semibold text-slate-800">Đề thi:</span> ${exam.question_file_path || "-"}</div>
+              <div><span class="font-semibold text-slate-800">Đáp án:</span> ${exam.answer_file_path || "-"}</div>
             </div>
           </div>
 
           ${exam.answer_extract ? `
           <div class="rounded-xl border border-slate-200 p-3 text-sm">
-            <div class="font-semibold mb-2">Ket qua extract</div>
+            <div class="font-semibold mb-2">Kết quả trích xuất</div>
             <pre class="text-xs text-slate-600 overflow-auto bg-slate-50 rounded-lg p-3" style="max-height:240px">${JSON.stringify(exam.answer_extract, null, 2)}</pre>
           </div>` : ""}
         </div>
       `;
     } catch (error) {
-      document.getElementById("exam-detail-content").innerHTML = `<div class="text-sm text-red-600">Loi: ${error.message}</div>`;
+      document.getElementById("exam-detail-content").innerHTML = `<div class="text-sm text-red-600">Lỗi: ${error.message}</div>`;
     }
   }
 
@@ -308,7 +336,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const submitBtn = document.getElementById("update-submit-btn");
 
     submitBtn.disabled = true;
-    renderUpdateMessage("info", "Dang luu thay doi...");
+    renderUpdateMessage("info", "Đang lưu thay đổi...");
 
     try {
       const formData = new FormData();
@@ -349,14 +377,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function deleteExam(examId) {
     const exam = allExams.find((e) => String(e.id) === String(examId));
     const title = exam?.title || `#${examId}`;
-    if (!confirm(`Xac nhan luu tru (archive) de thi:\n"${title}"?`)) return;
+    if (!confirm(`Xác nhận lưu trữ (archive) đề thi:\n"${title}"?`)) return;
 
     try {
       await window.AppApi.deleteExam(examId);
       await loadData();
       applyFilters();
     } catch (error) {
-      alert(`Loi: ${error.message}`);
+      alert(`Lỗi: ${error.message}`);
     }
   }
 

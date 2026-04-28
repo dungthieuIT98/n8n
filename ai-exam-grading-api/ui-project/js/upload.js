@@ -25,13 +25,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   function fillSelect(select, items, placeholder) {
     const safe = Array.isArray(items) ? items : [];
     select.innerHTML = [
-      `<option value="">${placeholder || "Chon"}</option>`,
+      `<option value="">${placeholder || "Chọn"}</option>`,
       ...safe.map((item) => `<option value="${String(item.value)}">${item.label}</option>`)
     ].join("");
   }
 
   async function loadMasterData() {
-    renderMessage("info", "Dang tai danh sach lop / mon / dot thi...");
+    renderMessage("info", "Đang tải danh sách lớp / môn / đợt thi...");
     try {
       const [classesPayload, subjectsPayload, periodsPayload] = await Promise.all([
         window.AppApi.list("classes"),
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         classes
           .filter((x) => !x.status || x.status === "active")
           .map((x) => pickValueLabel(x, "class_code", "class_name", "subject_code", "subject_name")),
-        "Chon lop"
+        "Chọn lớp"
       );
 
       fillSelect(
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         subjects
           .filter((x) => !x.status || x.status === "active")
           .map((x) => pickValueLabel(x, "subject_code", "subject_name", "class_code", "class_name")),
-        "Chon mon"
+        "Chọn môn"
       );
 
       // Build subject name map from the same data source as Mon hoc select
@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             value: x.period_code,
             label: x.period_name ? `${x.period_code} - ${x.period_name}` : String(x.period_code)
           })),
-        "Chon dot"
+        "Chọn đợt"
       );
 
       renderMessage("", "");
@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Fallback to previous defaults if master-data API is not ready
       window.AppUI.fillSelect(form.elements.class_code, window.AppUI.classOptions(), false);
       window.AppUI.fillSelect(form.elements.subject_code, window.AppUI.subjectOptions(), false);
-      renderMessage("error", `Khong the tai master data (lop/mon/dot thi). Dang dung option mac dinh. Loi: ${error.message}`);
+      renderMessage("error", `Không thể tải master data (lớp/môn/đợt thi). Đang dùng option mặc định. Lỗi: ${error.message}`);
     }
   }
 
@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Show teach_id (teacher_code) on UI; backend still resolves teacher_id from session if needed
   if (!currentTeacher) {
-    renderMessage("error", "Chua dang nhap. Vui long dang nhap lai de thay teach_id.");
+    renderMessage("error", "Chưa đăng nhập. Vui lòng đăng nhập lại để thấy teach_id.");
     form.querySelectorAll("input, select, button, textarea").forEach((el) => {
       el.disabled = true;
     });
@@ -126,12 +126,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const submitButton = form.querySelector('button[type="submit"]');
 
     if (!questionFile || !answerFile) {
-      renderMessage("error", "Can chon day du file de thi va file dap an.");
+      renderMessage("error", "Cần chọn đầy đủ file đề thi và file đáp án.");
       return;
     }
 
     submitButton.disabled = true;
-    renderMessage("info", "Dang tao de thi va tai file...");
+    renderMessage("info", "Đang tạo đề thi và tải file...");
 
     try {
       const formData = new FormData();
@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       formData.set("answer_file", answerFile);
 
       const payload = await window.AppApi.createExam(formData);
-      renderMessage("success", `Da tao de thi ${payload.data.exam_code}. Trang thai hien tai: ${payload.data.status}.`);
+      renderMessage("success", `Đã tạo đề thi ${payload.data.exam_code}. Trạng thái hiện tại: ${payload.data.status}.`);
       form.reset();
       form.elements.teacher_id.value = teachId;
     } catch (error) {

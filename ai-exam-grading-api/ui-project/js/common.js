@@ -1,15 +1,15 @@
 (function () {
   const DEFAULT_CLASS_OPTIONS = ["12A1", "12A2", "11B1", "10C3"];
   const DEFAULT_SUBJECT_OPTIONS = [
-    { code: "MATH", name: "Toan hoc" },
-    { code: "PHY", name: "Vat ly" },
-    { code: "LIT", name: "Ngu van" },
-    { code: "ENG", name: "Tieng Anh" }
+    { code: "MATH", name: "Toán học" },
+    { code: "PHY", name: "Vật lý" },
+    { code: "LIT", name: "Ngữ văn" },
+    { code: "ENG", name: "Tiếng Anh" }
   ];
 
   function fillSelect(select, options, includeAll) {
     const items = includeAll
-      ? [{ value: "", label: "Tat ca" }].concat(options)
+      ? [{ value: "", label: "Tất cả" }].concat(options)
       : options;
     select.innerHTML = items.map((item) => `<option value="${item.value}">${item.label}</option>`).join("");
   }
@@ -43,10 +43,10 @@
 
   function examTypeOptions() {
     return [
-      { value: "15p", label: "15 phut" },
-      { value: "giua_ky", label: "Giua ky" },
-      { value: "cuoi_ky", label: "Cuoi ky" },
-      { value: "thu", label: "Thu" }
+      { value: "15p", label: "15 phút" },
+      { value: "giua_ky", label: "Giữa kỳ" },
+      { value: "cuoi_ky", label: "Cuối kỳ" },
+      { value: "thu", label: "Thử" }
     ];
   }
 
@@ -121,26 +121,52 @@
     };
 
     const cls = map[s] || "bg-slate-50 text-slate-700 border-slate-200";
-    return `<span class="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-semibold ${cls}">${status}</span>`;
+    const labelMap = {
+      draft: "Nháp",
+      processing: "Đang xử lý",
+      ready: "Sẵn sàng",
+      archived: "Lưu trữ",
+      active: "Hoạt động",
+
+      uploaded: "Đã tải lên",
+      extracting: "Đang trích xuất",
+      extracted: "Đã trích xuất",
+      grading: "Đang chấm",
+      graded: "Đã chấm",
+      regrade: "Chấm lại",
+      published: "Đã công bố",
+
+      queued: "Đang chờ",
+      running: "Đang chạy",
+      success: "Thành công",
+      failed: "Thất bại",
+
+      approved: "Đạt",
+      rejected: "Không đạt",
+      warning: "Cảnh báo",
+      recheck: "Cần kiểm tra lại"
+    };
+    const label = labelMap[s] || String(status ?? "");
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-semibold ${cls}">${label}</span>`;
   }
 
   function renderQuestionList(questions) {
     if (!questions || !questions.length) {
-      return `<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Chua co du lieu cau hoi vi bai nop dang loi hoac chua extract xong.</div>`;
+      return `<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Chưa có dữ liệu câu hỏi vì bài nộp đang lỗi hoặc chưa trích xuất xong.</div>`;
     }
 
     return questions.map((item) => `
       <div class="rounded-xl border border-slate-200 p-4 space-y-2">
         <div class="flex items-center justify-between gap-3">
-          <div class="font-extrabold">Cau ${item.no}</div>
+          <div class="font-extrabold">Câu ${item.no}</div>
           <div>${renderStatus(item.result === "Dung" ? "approved" : "failed")}</div>
         </div>
         <div class="text-sm space-y-1">
-          <div><span class="font-semibold">De bai:</span> ${item.question}</div>
-          <div><span class="font-semibold">Tra loi:</span> ${item.student_answer}</div>
-          <div><span class="font-semibold">Dap an dung:</span> ${item.correct_answer}</div>
-          <div><span class="font-semibold">Diem:</span> ${item.score}</div>
-          <div><span class="font-semibold">Giai thich:</span> ${item.explanation}</div>
+          <div><span class="font-semibold">Đề bài:</span> ${item.question}</div>
+          <div><span class="font-semibold">Trả lời:</span> ${item.student_answer}</div>
+          <div><span class="font-semibold">Đáp án đúng:</span> ${item.correct_answer}</div>
+          <div><span class="font-semibold">Điểm:</span> ${item.score}</div>
+          <div><span class="font-semibold">Giải thích:</span> ${item.explanation}</div>
         </div>
       </div>
     `).join("");
@@ -148,7 +174,7 @@
 
   function renderSubmissionDetail(submission) {
     if (!submission) {
-      return '<div class="text-sm text-slate-700">Khong tim thay bai nop.</div>';
+      return '<div class="text-sm text-slate-700">Không tìm thấy bài nộp.</div>';
     }
 
     return `
@@ -159,40 +185,40 @@
             <div class="font-bold">${submission.student_code}</div>
           </div>
           <div class="rounded-xl border border-slate-200 p-3">
-            <div class="text-xs font-semibold text-slate-500">Lop</div>
+            <div class="text-xs font-semibold text-slate-500">Lớp</div>
             <div class="font-bold">${submission.class_code}</div>
           </div>
           <div class="rounded-xl border border-slate-200 p-3">
-            <div class="text-xs font-semibold text-slate-500">Mon hoc</div>
+            <div class="text-xs font-semibold text-slate-500">Môn học</div>
             <div class="font-bold">${submission.subject_name}</div>
           </div>
           <div class="rounded-xl border border-slate-200 p-3">
-            <div class="text-xs font-semibold text-slate-500">Loai bai thi</div>
+            <div class="text-xs font-semibold text-slate-500">Loại bài thi</div>
             <div class="font-bold">${submission.exam_type}</div>
           </div>
           <div class="rounded-xl border border-slate-200 p-3">
-            <div class="text-xs font-semibold text-slate-500">Diem tong</div>
+            <div class="text-xs font-semibold text-slate-500">Điểm tổng</div>
             <div class="font-bold">${submission.total_score}/${submission.max_score}</div>
           </div>
           <div class="rounded-xl border border-slate-200 p-3">
-            <div class="text-xs font-semibold text-slate-500">AI confidence</div>
+            <div class="text-xs font-semibold text-slate-500">Độ tin cậy AI</div>
             <div class="font-bold">${submission.ai_confidence ? `${submission.ai_confidence}%` : "-"}</div>
           </div>
           <div class="rounded-xl border border-slate-200 p-3">
-            <div class="text-xs font-semibold text-slate-500">Trang thai</div>
+            <div class="text-xs font-semibold text-slate-500">Trạng thái</div>
             <div>${renderStatus(submission.status)}</div>
           </div>
           <div class="rounded-xl border border-slate-200 p-3">
-            <div class="text-xs font-semibold text-slate-500">Phe duyet</div>
+            <div class="text-xs font-semibold text-slate-500">Phê duyệt</div>
             <div>${submission.review_status ? renderStatus(submission.review_status) : "-"}</div>
           </div>
         </div>
 
         <div class="rounded-2xl border border-slate-200 p-4 text-sm space-y-2">
-          <div><span class="font-semibold">De thi:</span> ${submission.exam_code || "-"}</div>
-          <div><span class="font-semibold">File bai nop:</span> ${submission.submission_file_path ? `<a href="${submission.submission_file_path}" target="_blank" class="text-blue-600 hover:underline">${submission.submission_file_path.split('/').pop()}</a>` : "-"}</div>
-          <div><span class="font-semibold">Ket qua JSON:</span> ${submission.grading_result_file_path || "-"}</div>
-          <div><span class="font-semibold">Ghi chu:</span> ${submission.notes || "Khong co"}</div>
+          <div><span class="font-semibold">Đề thi:</span> ${submission.exam_code || "-"}</div>
+          <div><span class="font-semibold">File bài nộp:</span> ${submission.submission_file_path ? `<a href="${submission.submission_file_path}" target="_blank" class="text-blue-600 hover:underline">${submission.submission_file_path.split('/').pop()}</a>` : "-"}</div>
+          <div><span class="font-semibold">Kết quả JSON:</span> ${submission.grading_result_file_path || "-"}</div>
+          <div><span class="font-semibold">Ghi chú:</span> ${submission.notes || "Không có"}</div>
         </div>
 
         <div class="space-y-3">${renderQuestionList(submission.questions || [])}</div>
@@ -204,6 +230,50 @@
     if (!filePath) return null;
     if (/^https?:\/\//i.test(filePath)) return filePath;
     return '/' + filePath.replace(/\\/g, '/').replace(/^\//, '');
+  }
+
+  function renderPagination(containerId, total, currentPage, pageSize, onPageChange) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const totalPages = Math.ceil(total / pageSize);
+
+    if (totalPages <= 1) {
+      el.innerHTML = total > 0 ? `<span class="text-xs text-slate-500">${total} dòng</span>` : '';
+      return;
+    }
+
+    const range = [];
+    const delta = 2;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+        range.push(i);
+      }
+    }
+    const withEllipsis = [];
+    let prev = null;
+    for (const p of range) {
+      if (prev !== null && p - prev > 1) withEllipsis.push('...');
+      withEllipsis.push(p);
+      prev = p;
+    }
+
+    el.innerHTML = `
+      <span class="text-xs text-slate-500">${total} dòng &middot; Trang ${currentPage}/${totalPages}</span>
+      <div class="flex items-center gap-1 flex-wrap">
+        <button ${currentPage === 1 ? 'disabled' : ''} id="${containerId}-prev" class="px-2.5 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">&#8249; Trước</button>
+        ${withEllipsis.map((p) => p === '...'
+          ? `<span class="px-1 text-xs text-slate-400">...</span>`
+          : `<button class="px-2.5 py-1 rounded-lg border text-xs font-semibold ${p === currentPage ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 hover:bg-slate-50'}" data-page="${p}">${p}</button>`
+        ).join('')}
+        <button ${currentPage === totalPages ? 'disabled' : ''} id="${containerId}-next" class="px-2.5 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Sau &#8250;</button>
+      </div>
+    `;
+
+    document.getElementById(`${containerId}-prev`)?.addEventListener('click', () => onPageChange(currentPage - 1));
+    document.getElementById(`${containerId}-next`)?.addEventListener('click', () => onPageChange(currentPage + 1));
+    el.querySelectorAll('[data-page]').forEach((btn) => {
+      btn.addEventListener('click', () => onPageChange(Number(btn.dataset.page)));
+    });
   }
 
   function downloadCsv(fileName, text) {
@@ -230,6 +300,7 @@
     logStatusOptions,
     renderStatus,
     renderSubmissionDetail,
+    renderPagination,
     downloadCsv
   };
 })();

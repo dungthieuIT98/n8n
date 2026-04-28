@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Exam Grading - Upload bai lam</title>
+  <title>AI Exam Grading - Nộp bài làm</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,65 +16,65 @@
   <div class="min-h-screen flex">
     <aside class="w-64 bg-white border-r border-slate-200 p-4">
       <div class="mb-4">
-        <div class="text-xs font-semibold text-slate-500">Student portal</div>
+        <div class="text-xs font-semibold text-slate-500">Cổng sinh viên</div>
         <div class="text-lg font-extrabold"><a class="hover:underline" href="index.html">AI Exam Grading</a></div>
-        <div class="text-xs text-slate-600 mt-1">Cong nop bai lam va theo doi xu ly.</div>
+        <div class="text-xs text-slate-600 mt-1">Cổng nộp bài làm và theo dõi xử lý.</div>
       </div>
-      <div id="current-user-label" class="text-xs text-slate-600 mb-3">Cong nop bai sinh vien</div>
+      <div id="current-user-label" class="text-xs text-slate-600 mb-3">Cổng nộp bài sinh viên</div>
       <nav class="space-y-1" id="nav"></nav>
     </aside>
 
     <main class="flex-1 p-6">
       <div class="max-w-6xl mx-auto space-y-6">
         <section class="bg-white border border-slate-200 rounded-2xl p-5">
-          <div class="text-xs font-semibold text-slate-500">Submission form</div>
-          <h1 class="text-2xl font-extrabold mt-1">Nop bai lam</h1>
-          <p class="text-sm text-slate-600 mt-1">Nhap thong tin sinh vien, chon bai thi va tai len file bai lam theo workflow.</p>
+          <div class="text-xs font-semibold text-slate-500">Phiếu nộp bài</div>
+          <h1 class="text-2xl font-extrabold mt-1">Nộp bài làm</h1>
+          <p class="text-sm text-slate-600 mt-1">Nhập thông tin sinh viên, chọn bài thi và tải lên file bài làm theo workflow.</p>
           <div class="mt-3 text-xs text-slate-600">
-            <span class="font-semibold">Payload:</span> student_name, student_code, subject_code, exam_id, class_code, notes, submission_file
+            <span class="font-semibold">Dữ liệu gửi:</span> student_name, student_code, subject_code, exam_id, class_code, notes, submission_file
           </div>
         </section>
 
         <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <form id="submission-form" class="xl:col-span-2 bg-white border border-slate-200 rounded-2xl">
             <div class="p-4 border-b border-slate-200">
-              <h2 class="font-extrabold">Thong tin sinh vien va bai thi</h2>
-              <p class="text-sm text-slate-600">Cac truong can co de backend forward sang n8n workflow.</p>
+              <h2 class="font-extrabold">Thông tin sinh viên và bài thi</h2>
+              <p class="text-sm text-slate-600">Các trường cần có để backend forward sang workflow n8n.</p>
             </div>
             <div class="p-4 space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">Ma sinh vien</div>
+                  <div class="text-sm font-semibold text-slate-700">Mã sinh viên</div>
                   <input id="student-code" type="text" name="student_code" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="SV001" required>
                 </label>
                 <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">Ho va ten</div>
-                  <input id="student-name" type="text" name="student_name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Nguyen Van A" required>
+                  <div class="text-sm font-semibold text-slate-700">Họ và tên</div>
+                  <input id="student-name" type="text" name="student_name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Nguyễn Văn A" required>
                 </label>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">Ma lop</div>
+                  <div class="text-sm font-semibold text-slate-700">Mã lớp</div>
                   <input id="class-code" type="text" name="class_code" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="12A1" required>
                 </label>
                 <div class="block">
-                  <div class="text-sm font-semibold text-slate-700">Bai thi</div>
+                  <div class="text-sm font-semibold text-slate-700">Bài thi</div>
                   <!-- hidden input carries the value for form submission -->
                   <input type="hidden" id="exam-id" name="exam_id">
                   <!-- custom searchable dropdown -->
                   <div id="exam-dropdown" class="relative mt-1">
                     <button type="button" id="exam-dropdown-btn"
                       class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-left text-sm flex items-center justify-between gap-2 focus:outline-none focus:ring-2 focus:ring-slate-900/20">
-                      <span id="exam-dropdown-label" class="truncate text-slate-400">Chon bai thi</span>
+                      <span id="exam-dropdown-label" class="truncate text-slate-400">Chọn bài thi</span>
                       <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <div id="exam-dropdown-panel" class="hidden absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg">
                       <!-- filter row -->
                       <div class="p-2 border-b border-slate-100 grid grid-cols-3 gap-1.5">
-                        <input id="filter-class" type="text" placeholder="Lop" class="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
-                        <input id="filter-subject" type="text" placeholder="Mon" class="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
-                        <input id="filter-type" type="text" placeholder="Loai" class="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+                        <input id="filter-class" type="text" placeholder="Lớp" class="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+                        <input id="filter-subject" type="text" placeholder="Môn" class="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+                        <input id="filter-type" type="text" placeholder="Loại" class="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
                       </div>
                       <ul id="exam-dropdown-list" class="max-h-52 overflow-y-auto py-1 text-sm"></ul>
                     </div>
@@ -88,48 +88,48 @@
               <div id="exam-info-display" class="hidden">
                 <div class="rounded-2xl border border-slate-200 p-4 grid grid-cols-2 gap-3">
                   <div>
-                    <div class="text-xs font-semibold text-slate-500">Ten mon</div>
+                    <div class="text-xs font-semibold text-slate-500">Tên môn</div>
                     <div class="font-bold" id="exam-subject">-</div>
                   </div>
                   <div>
-                    <div class="text-xs font-semibold text-slate-500">Loai bai thi</div>
+                    <div class="text-xs font-semibold text-slate-500">Loại bài thi</div>
                     <div class="font-bold" id="exam-type">-</div>
                   </div>
                   <div>
-                    <div class="text-xs font-semibold text-slate-500">Ma de</div>
+                    <div class="text-xs font-semibold text-slate-500">Mã đề</div>
                     <div class="font-bold" id="exam-code">-</div>
                   </div>
                   <div>
-                    <div class="text-xs font-semibold text-slate-500">Trang thai</div>
-                    <div class="font-bold">San sang nop bai</div>
+                    <div class="text-xs font-semibold text-slate-500">Trạng thái</div>
+                    <div class="font-bold">Sẵn sàng nộp bài</div>
                   </div>
                 </div>
               </div>
 
               <label class="block">
-                <div class="text-sm font-semibold text-slate-700">Ghi chu them</div>
-                <textarea id="notes" name="notes" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" rows="3" placeholder="Neu can, ban co the bo sung ghi chu ngan cho bai lam."></textarea>
+                <div class="text-sm font-semibold text-slate-700">Ghi chú thêm</div>
+                <textarea id="notes" name="notes" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" rows="3" placeholder="Nếu cần, bạn có thể bổ sung ghi chú ngắn cho bài làm."></textarea>
               </label>
             </div>
           </form>
 
           <aside class="bg-white border border-slate-200 rounded-2xl">
             <div class="p-4 border-b border-slate-200">
-              <h2 class="font-extrabold">Dua file bai lam</h2>
-              <p class="text-sm text-slate-600">Nhan 1 file PDF qua truong <strong>submission_file</strong>.</p>
+              <h2 class="font-extrabold">Đưa file bài làm</h2>
+              <p class="text-sm text-slate-600">Nhận 1 file PDF qua trường <strong>submission_file</strong>.</p>
             </div>
             <div class="p-4 space-y-4">
               <label class="block">
-                <div class="text-sm font-semibold text-slate-700">File bai lam</div>
+                <div class="text-sm font-semibold text-slate-700">File bài làm</div>
                 <input id="submission-file" type="file" name="submission_file" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" accept=".pdf,application/pdf" required>
               </label>
               <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 space-y-1">
-                <div>Chi ho tro dinh dang PDF.</div>
-                <div>Khong can dang nhap de nop bai.</div>
-                <div>Moi lan nop tuong ung 1 bai thi va 1 file.</div>
+                <div>Chỉ hỗ trợ định dạng PDF.</div>
+                <div>Không cần đăng nhập để nộp bài.</div>
+                <div>Mỗi lần nộp tương ứng 1 bài thi và 1 file.</div>
               </div>
               <div id="upload-message"></div>
-              <button id="submit-btn" type="submit" form="submission-form" class="w-full px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold disabled:opacity-50">Nop bai lam</button>
+              <button id="submit-btn" type="submit" form="submission-form" class="w-full px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold disabled:opacity-50">Nộp bài làm</button>
             </div>
           </aside>
         </section>

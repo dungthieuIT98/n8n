@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderExtract(extract) {
-    if (!extract) return 'Chua co du lieu trich xuat.';
+    if (!extract) return 'Chưa có dữ liệu trích xuất.';
     if (typeof extract === 'string') return extract;
     // If JSONB object, pretty-print or render text field
     if (extract.text) return extract.text;
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       fileEl.innerHTML = `<a href="${submission.submission_file_path}" target="_blank"
         class="text-blue-600 hover:underline text-sm">${filename}</a>`;
     } else {
-      fileEl.textContent = 'Khong co file';
+      fileEl.textContent = 'Không có file';
     }
 
     // Submission extract
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!submissionId) {
       loading.classList.add('hidden');
-      errorBlock.textContent = 'Thieu tham so submission_id trong URL. Vi du: grading-result.html?submission_id=1';
+      errorBlock.textContent = 'Thiếu tham số submission_id trong URL. Ví dụ: grading-result.html?submission_id=1';
       errorBlock.classList.remove('hidden');
       return;
     }
@@ -147,9 +147,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       loading.classList.add('hidden');
       // If content is already visible (reload after action), show inline message instead
       if (!content.classList.contains('hidden')) {
-        showMsg('error', `Loi tai lai du lieu: ${err.message}`);
+        showMsg('error', `Lỗi tải lại dữ liệu: ${err.message}`);
       } else {
-        errorBlock.textContent = `Loi tai du lieu: ${err.message}`;
+        errorBlock.textContent = `Lỗi tải dữ liệu: ${err.message}`;
         errorBlock.classList.remove('hidden');
       }
     }
@@ -177,10 +177,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         grading_detail: parsedDetail,
         notes: $('g-notes').value
       });
-      showMsg('success', 'Da luu ket qua cham bai thanh cong.');
+      showMsg('success', 'Đã lưu kết quả chấm bài thành công.');
       await loadData();
     } catch (err) {
-      showMsg('error', `Loi luu: ${err.message}`);
+      showMsg('error', `Lỗi lưu: ${err.message}`);
       btnSave.disabled = false;
     }
   });
@@ -199,10 +199,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       await window.AppApi.deleteGrading(state.grading.grading_id);
-      showMsg('success', 'Da xoa ket qua cham bai.');
+      showMsg('success', 'Đã xóa kết quả chấm bài.');
       await loadData();
     } catch (err) {
-      showMsg('error', `Loi xoa: ${err.message}`);
+      showMsg('error', `Lỗi xóa: ${err.message}`);
       btnDelete.disabled = false;
     }
   });
@@ -211,14 +211,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnRegrade.addEventListener('click', async () => {
     if (!submissionId) return;
     btnRegrade.disabled = true;
-    showMsg('info', 'Dang cham lai...');
+    showMsg('info', 'Đang chấm lại...');
 
     try {
       const res = await window.AppApi.regradeGrading(submissionId);
-      showMsg('success', `Cham lai thanh cong. Diem moi: ${res.data?.grading?.total_score ?? '-'}`);
+      showMsg('success', `Chấm lại thành công. Điểm mới: ${res.data?.grading?.total_score ?? '-'}`);
       renderPage(res.data);
     } catch (err) {
-      showMsg('error', `Loi cham lai: ${err.message}`);
+      showMsg('error', `Lỗi chấm lại: ${err.message}`);
       btnRegrade.disabled = false;
     }
   });

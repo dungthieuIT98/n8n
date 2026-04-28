@@ -36,11 +36,11 @@
     if (response.status === 401) {
       window.AppState.clearSession();
       window.location.href = "login.html";
-      throw new Error("Session expired. Please log in again.");
+      throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
     }
 
     if (!response.ok) {
-      throw new Error(payload.message || `Request failed with status ${response.status}`);
+      throw new Error(payload.message || `Yêu cầu thất bại (mã ${response.status}).`);
     }
 
     return payload;
@@ -53,7 +53,7 @@
     if (item) {
       return Promise.resolve({ success: true, data: item });
     }
-    return Promise.reject(new Error(`Not found: ${entity} ${id}`));
+    return Promise.reject(new Error(`Không tìm thấy: ${entity} ${id}`));
   }
 
   function list(entity, params) {

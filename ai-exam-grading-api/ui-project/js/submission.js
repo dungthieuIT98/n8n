@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     examIdInput.value = "";
     examIdDisplay.value = "";
     subjectCodeInput.value = "";
-    dropdownLabel.textContent = "Chon bai thi";
+    dropdownLabel.textContent = "Chọn bài thi";
     dropdownLabel.classList.add("text-slate-400");
     dropdownLabel.classList.remove("text-slate-900");
     document.getElementById("exam-subject").textContent = "-";
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
 
     if (!filtered.length) {
-      dropdownList.innerHTML = `<li class="px-3 py-3 text-xs text-slate-400 text-center">Khong tim thay bai thi</li>`;
+      dropdownList.innerHTML = `<li class="px-3 py-3 text-xs text-slate-400 text-center">Không tìm thấy bài thi</li>`;
       return;
     }
 
@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderList();
     } catch (error) {
       console.error("Failed to load exams:", error);
-      renderMessage("error", `Khong the tai danh sach bai thi: ${error.message}`);
+      renderMessage("error", `Không thể tải danh sách bài thi: ${error.message}`);
     }
   }
 
@@ -150,13 +150,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const submitButton = document.getElementById("submit-btn");
     const submissionFile = document.getElementById("submission-file")?.files?.[0];
 
-    if (!submissionFile) { renderMessage("error", "Vui long chon file bai lam."); return; }
-    if (!examIdInput.value) { renderMessage("error", "Vui long chon bai thi."); return; }
-    if (!subjectCodeInput.value.trim()) { renderMessage("error", "Thong tin bai thi chua day du. Vui long chon lai."); return; }
-    if (!submissionFile.name.toLowerCase().endsWith(".pdf")) { renderMessage("error", "Vui long tai len file .pdf."); return; }
+    if (!submissionFile) { renderMessage("error", "Vui lòng chọn file bài làm."); return; }
+    if (!examIdInput.value) { renderMessage("error", "Vui lòng chọn bài thi."); return; }
+    if (!subjectCodeInput.value.trim()) { renderMessage("error", "Thông tin bài thi chưa đầy đủ. Vui lòng chọn lại."); return; }
+    if (!submissionFile.name.toLowerCase().endsWith(".pdf")) { renderMessage("error", "Vui lòng tải lên file .pdf."); return; }
 
     submitButton.disabled = true;
-    renderMessage("info", "Dang dua bai lam...");
+    renderMessage("info", "Đang đưa bài làm...");
 
     try {
       const formData = new FormData();
@@ -175,11 +175,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       await window.AppApi.submitExamSubmission(formData);
-      renderMessage("success", `Da nop bai lam thanh cong! De: ${selectedExam?.exam_code || "N/A"}. Vui long doi cham diem.`);
+      renderMessage("success", `Đã nộp bài làm thành công! Đề: ${selectedExam?.exam_code || "N/A"}. Vui lòng đợi chấm điểm.`);
       form.reset();
       resetExamDetails();
     } catch (error) {
-      renderMessage("error", `Loi khi nop bai: ${error.message}`);
+      renderMessage("error", `Lỗi khi nộp bài: ${error.message}`);
     } finally {
       submitButton.disabled = false;
     }

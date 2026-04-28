@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Exam Grading - Log he thong</title>
+  <title>AI Exam Grading - Nhật ký hệ thống</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,15 +16,15 @@
   <div class="min-h-screen flex">
     <aside class="w-64 bg-white border-r border-slate-200 p-4">
       <div class="mb-4">
-        <div class="text-xs font-semibold text-slate-500">Teacher Portal</div>
+        <div class="text-xs font-semibold text-slate-500">Cổng giáo viên</div>
         <div class="text-lg font-extrabold"><a class="hover:underline" href="index.html">AI Exam Grading</a></div>
-        <div class="text-xs text-slate-600 mt-1">Project UI tach file theo spec 01, 02, 03, 04.</div>
+        <div class="text-xs text-slate-600 mt-1"></div>
       </div>
-      <div id="current-user-label" class="text-xs text-slate-600 mb-3">Chua dang nhap</div>
+      <div id="current-user-label" class="text-xs text-slate-600 mb-3">Chưa đăng nhập</div>
       <nav class="space-y-1" id="nav"></nav>
       <div class="mt-6 pt-4 border-t border-slate-200">
         <button class="js-logout w-full px-3 py-2 rounded-lg border border-slate-300 hover:bg-white bg-slate-100 text-sm font-semibold">
-          Dang xuat
+          Đăng xuất
         </button>
       </div>
     </aside>
@@ -33,38 +33,34 @@
       <div class="max-w-6xl mx-auto space-y-6">
         <section class="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
           <div>
-            <div class="text-xs font-semibold text-slate-500">Teacher workspace</div>
-            <h1 class="text-2xl font-extrabold mt-1">Log he thong</h1>
-            <p class="text-sm text-slate-600 mt-1">Theo doi workflow extract, grading, publish va retry thong qua bang log tap trung.</p>
+            <div class="text-xs font-semibold text-slate-500">Không gian giáo viên</div>
+            <h1 class="text-2xl font-extrabold mt-1">Nhật ký hệ thống</h1>
+            <p class="text-sm text-slate-600 mt-1">Theo dõi workflow trích xuất, chấm, công bố và thử lại thông qua bảng nhật ký tập trung.</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <a class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" href="results.html">Mo man hinh cham</a>
+            <a class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" href="results.html">Mở màn hình chấm</a>
           </div>
         </section>
 
         <section class="bg-white border border-slate-200 rounded-2xl">
           <div class="p-4 border-b border-slate-200">
-            <h2 class="font-extrabold">Bo loc log</h2>
-            <p class="text-sm text-slate-600">Loc theo job type, status va keyword.</p>
+            <h2 class="font-extrabold">Bộ lọc nhật ký</h2>
+            <p class="text-sm text-slate-600">Lọc theo loại job, trạng thái và từ khóa.</p>
           </div>
 
           <div class="p-4 space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               <label class="block">
-                <div class="text-sm font-semibold text-slate-700">Loai job</div>
+                <div class="text-sm font-semibold text-slate-700">Loại job</div>
                 <select id="log-filter-type" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
               </label>
               <label class="block">
-                <div class="text-sm font-semibold text-slate-700">Trang thai</div>
+                <div class="text-sm font-semibold text-slate-700">Trạng thái</div>
                 <select id="log-filter-status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"></select>
               </label>
               <label class="block lg:col-span-2">
-                <div class="text-sm font-semibold text-slate-700">Tim ma de thi / student_code / class_code</div>
+                <div class="text-sm font-semibold text-slate-700">Tìm mã đề thi / student_code / class_code</div>
                 <input type="text" id="log-filter-keyword" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="EX-2026-001 / SV2026001 / 12A1">
-              </label>
-              <label class="block lg:col-span-2">
-                <div class="text-sm font-semibold text-slate-700">workflow_execution_id</div>
-                <input type="text" id="log-filter-workflow" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="wf-grade-001">
               </label>
             </div>
 
@@ -72,20 +68,21 @@
               <table class="min-w-full text-sm">
                 <thead class="text-left text-slate-600 bg-slate-50">
                   <tr>
-                    <th class="py-2 px-3">Thoi gian</th>
-                    <th class="py-2 px-3">Loai job</th>
-                    <th class="py-2 px-3">Doi tuong</th>
+                    <th class="py-2 px-3">Thời gian</th>
+                    <th class="py-2 px-3">Loại job</th>
+                    <th class="py-2 px-3">Đối tượng</th>
                     <th class="py-2 px-3">student_code</th>
                     <th class="py-2 px-3">class_code</th>
-                    <th class="py-2 px-3">Trang thai</th>
-                    <th class="py-2 px-3">Thong diep</th>
+                    <th class="py-2 px-3">Trạng thái</th>
+                    <th class="py-2 px-3">Thông điệp</th>
                     <th class="py-2 px-3">workflow_execution_id</th>
-                    <th class="py-2 px-3">Hanh dong</th>
+                    <th class="py-2 px-3">Hành động</th>
                   </tr>
                 </thead>
                 <tbody id="log-table-body" class="divide-y divide-slate-100"></tbody>
               </table>
             </div>
+            <div id="log-pagination" class="pt-3 flex items-center justify-between flex-wrap gap-2"></div>
           </div>
         </section>
       </div>
@@ -95,11 +92,11 @@
         <div data-modal-overlay class="absolute inset-0 bg-black/40"></div>
         <div class="relative w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-slate-200">
           <div class="p-4 border-b border-slate-200 flex items-center justify-between">
-            <h3 id="log-modal-title" class="font-extrabold">Chi tiet log</h3>
-            <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" data-close-modal="log-detail-modal" id="log-modal-close">Dong</button>
+            <h3 id="log-modal-title" class="font-extrabold">Chi tiết nhật ký</h3>
+            <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" data-close-modal="log-detail-modal" id="log-modal-close">Đóng</button>
           </div>
           <div class="p-4" id="log-detail-content">
-            <p>Dang tai...</p>
+            <p>Đang tải...</p>
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Exam Grading - Upload de thi</title>
+  <title>AI Exam Grading - Tải lên đề thi</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,15 +16,15 @@
   <div class="min-h-screen flex">
     <aside class="w-64 bg-white border-r border-slate-200 p-4">
       <div class="mb-4">
-        <div class="text-xs font-semibold text-slate-500">Teacher Portal</div>
+        <div class="text-xs font-semibold text-slate-500">Cổng giáo viên</div>
         <div class="text-lg font-extrabold"><a class="hover:underline" href="index.html">AI Exam Grading</a></div>
-        <div class="text-xs text-slate-600 mt-1">Project UI tach file theo spec 01, 02, 03, 04.</div>
+        <div class="text-xs text-slate-600 mt-1"></div>
       </div>
-      <div id="current-user-label" class="text-xs text-slate-600 mb-3">Chua dang nhap</div>
+      <div id="current-user-label" class="text-xs text-slate-600 mb-3">Chưa đăng nhập</div>
       <nav class="space-y-1" id="nav"></nav>
       <div class="mt-6 pt-4 border-t border-slate-200">
         <button class="js-logout w-full px-3 py-2 rounded-lg border border-slate-300 hover:bg-white bg-slate-100 text-sm font-semibold">
-          Dang xuat
+          Đăng xuất
         </button>
       </div>
     </aside>
@@ -33,82 +33,82 @@
       <div class="max-w-6xl mx-auto space-y-6">
         <section class="bg-white border border-slate-200 rounded-2xl p-5 flex items-start justify-between gap-4">
           <div>
-            <div class="text-xs font-semibold text-slate-500">Teacher workspace</div>
-            <h1 class="text-2xl font-extrabold mt-1">Upload de thi va loi giai</h1>
-            <p class="text-sm text-slate-600 mt-1">Tao de thi moi va dua dap an vao he thong voi cac truong bat buoc theo spec.</p>
+            <div class="text-xs font-semibold text-slate-500">Không gian giáo viên</div>
+            <h1 class="text-2xl font-extrabold mt-1">Tải lên đề thi và lời giải</h1>
+            <p class="text-sm text-slate-600 mt-1">Tạo đề thi mới và đưa đáp án vào hệ thống với các trường bắt buộc theo spec.</p>
           </div>
         </section>
 
         <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <form id="upload-form" class="xl:col-span-2 bg-white border border-slate-200 rounded-2xl">
             <div class="p-4 border-b border-slate-200">
-              <h2 class="font-extrabold">Thong tin de thi</h2>
-              <p class="text-sm text-slate-600">Nhap metadata truoc khi dua file de thi va dap an vao he thong.</p>
+              <h2 class="font-extrabold">Thông tin đề thi</h2>
+              <p class="text-sm text-slate-600"></p>
             </div>
 
             <div class="p-4 space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">Ten de thi</div>
+                  <div class="text-sm font-semibold text-slate-700">Tên đề thi</div>
                   <input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900/20" type="text" name="title" required>
                 </label>
                 <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">Lop hoc</div>
+                  <div class="text-sm font-semibold text-slate-700">Lớp học</div>
                   <select class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20" name="class_code" required></select>
                 </label>
                 <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">Mon hoc</div>
+                  <div class="text-sm font-semibold text-slate-700">Môn học</div>
                   <select class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20" name="subject_code" required></select>
                 </label>
                 <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">Loai bai thi</div>
+                  <div class="text-sm font-semibold text-slate-700">Loại bài thi</div>
                   <select class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20" name="exam_type" required>
-                    <option value="">Chon loai</option>
-                    <option value="15p">15 phut</option>
-                    <option value="giua_ky">Giua ky</option>
-                    <option value="cuoi_ky">Cuoi ky</option>
-                    <option value="thu">Thu</option>
+                    <option value="">Chọn loại</option>
+                    <option value="15p">15 phút</option>
+                    <option value="giua_ky">Giữa kỳ</option>
+                    <option value="cuoi_ky">Cuối kỳ</option>
+                    <option value="thu">Thử</option>
                   </select>
                 </label>
                 <label class="block">
-                  <div class="text-sm font-semibold text-slate-700">Dot thi</div>
+                  <div class="text-sm font-semibold text-slate-700">Đợt thi</div>
                   <select class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20" name="exam_round" required>
-                    <option value="">Chon dot</option>
+                    <option value="">Chọn đợt</option>
                   </select>
                 </label>
                 <input type="hidden" name="teacher_id" required>
               </div>
 
               <label class="block">
-                <div class="text-sm font-semibold text-slate-700">Mo ta de thi</div>
-                <textarea class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900/20" name="description" rows="4" placeholder="Nhap mo ta ngan ve cau truc de thi"></textarea>
+                <div class="text-sm font-semibold text-slate-700">Mô tả đề thi</div>
+                <textarea class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900/20" name="description" rows="4" placeholder="Nhập mô tả ngắn về cấu trúc đề thi"></textarea>
               </label>
 
               <div class="flex flex-wrap gap-2">
-                <button class="px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold" type="submit">Tao de thi</button>
-                <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" type="reset">Nhap lai</button>
+                <button class="px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold" type="submit">Tạo đề thi</button>
+                <button class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm font-semibold" type="reset">Nhập lại</button>
               </div>
             </div>
           </form>
 
           <aside class="bg-white border border-slate-200 rounded-2xl">
             <div class="p-4 border-b border-slate-200">
-              <h2 class="font-extrabold">File va xac nhan</h2>
-              <p class="text-sm text-slate-600">Chon dung cap file de thi va file dap an de giam loi extract.</p>
+              <h2 class="font-extrabold">File và xác nhận</h2>
+              <p class="text-sm text-slate-600">Chọn đúng cặp file đề thi và file đáp án để giảm lỗi trích xuất.</p>
             </div>
 
             <div class="p-4 space-y-4">
               <label class="block">
-                <div class="text-sm font-semibold text-slate-700">File de thi</div>
+                <div class="text-sm font-semibold text-slate-700">File đề thi</div>
                 <input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" type="file" name="question_file" form="upload-form" accept=".pdf,.docx,.png,.jpg,.zip" required>
               </label>
               <label class="block">
-                <div class="text-sm font-semibold text-slate-700">File dap an / loi giai</div>
+                <div class="text-sm font-semibold text-slate-700">File đáp án / lời giải</div>
                 <input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white" type="file" name="answer_file" form="upload-form" accept=".pdf,.docx,.png,.jpg,.zip" required>
               </label>
               <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div class="font-bold">Luu y upload</div>
-                <div class="text-sm text-slate-600 mt-1">Uu tien file ro net, dat ten file theo mon hoc va dot thi de de doi soat.</div>
+                <div class="font-bold">Lưu ý khi tải lên</div>
+                <div class="text-sm text-slate-600 mt-1">Ưu tiên file rõ nét, đặt tên file theo môn học và đợt thi để dễ đối soát.</div>
               </div>
               <div id="upload-message" class="text-sm"></div>
             </div>

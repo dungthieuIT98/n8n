@@ -141,6 +141,82 @@ async function startServer() {
   app.use('/api/logs', logsRoutes);
   app.use('/api/grading', gradingRoutes);
   app.get('/api/student-results', studentResultsHandler);
+
+  // Dashboard stats - requires auth
+  app.get('/api/stats', async (request, response, next) => {
+    try {
+      const { requireAuth: checkAuth, getSessionFromRequest } = require('./helpers');
+      const session = getSessionFromRequest(request);
+      if (!session) {
+        response.status(401).json({ ok: false, message: 'Unauthorized' });
+        return;
+      }
+      const teacherId = session.teacher.id;
+
+      const result = await query(`
+        SELECT
+          (SELECT COUNT(*)::int FROM exams WHERE teacher_id = $1) AS total_exams,
+          (SELECT COUNT(*)::int FROM submissions s JOIN exams e ON e.id = s.exam_id WHERE e.teacher_id = $1) AS total_submissions,
+          (
+            SELECT COUNT(*)::int
+            FROM submissions s
+            JOIN exams e ON e.id = s.exam_id
+            JOIN LATERAL (
+              SELECT status FROM grading_results WHERE submission_id = s.id ORDER BY attempt_no DESC LIMIT 1
+            ) gr ON true
+            WHERE e.teacher_id = $1 AND gr.status = 'published'
+          ) AS published_count,
+          (SELECT COUNT(*)::int FROM system_logs WHERE created_by = $1 AND status IN ('failed', 'error')) AS failed_logs_count
+      `, [teacherId]);
+
+      response.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Per-exam chart data - requires auth
+  app.get('/api/exam-chart-data', async (request, response, next) => {
+    try {
+      const { getSessionFromRequest } = require('./helpers');
+      const session = getSessionFromRequest(request);
+      if (!session) {
+        response.status(401).json({ ok: false, message: 'Unauthorized' });
+        return;
+      }
+      const teacherId = session.teacher.id;
+
+      const result = await query(`
+        SELECT
+          e.id,
+          e.exam_code,
+          e.title,
+          COUNT(DISTINCT s.id)::int AS submission_count,
+          ROUND(AVG(gr.total_score)::numeric, 1) AS avg_score,
+          MAX(gr.total_score) AS max_score_achieved,
+          MIN(gr.total_score) AS min_score_achieved,
+          MAX(gr.max_score) AS max_score_possible
+        FROM exams e
+        LEFT JOIN submissions s ON s.exam_id = e.id
+        LEFT JOIN LATERAL (
+          SELECT total_score, max_score
+          FROM grading_results
+          WHERE submission_id = s.id AND status = 'published'
+          ORDER BY attempt_no DESC
+          LIMIT 1
+        ) gr ON true
+        WHERE e.teacher_id = $1
+        GROUP BY e.id, e.exam_code, e.title
+        ORDER BY e.created_at DESC
+        LIMIT 10
+      `, [teacherId]);
+
+      response.json({ ok: true, data: result.rows });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.use('/api', entitiesRoutes);
 
   app.post('/api/admin/reset-demo-data', async (_request, response, next) => {

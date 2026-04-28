@@ -1,28 +1,32 @@
 document.addEventListener("DOMContentLoaded", () => {
   window.AppLayout.init();
 
+  const PAGE_SIZE = 10;
+  let currentPage = 1;
+  let allResults = [];
+
   const form = document.getElementById("student-search-form");
   const tableBody = document.getElementById("student-table-body");
   let latestResults = [];
 
   async function showSubmissionDetail(submissionId) {
     try {
-      document.getElementById("student-modal-title").textContent = "Chi tiet bai thi - Dang tai...";
-      document.getElementById("student-detail-content").innerHTML = "<p>Dang tai du lieu...</p>";
+      document.getElementById("student-modal-title").textContent = "Chi tiết bài thi - Đang tải...";
+      document.getElementById("student-detail-content").innerHTML = "<p>Đang tải dữ liệu...</p>";
       window.AppLayout.openModal("student-detail-modal");
 
       const result = await window.AppApi.detail("submissions", submissionId);
       const submission = result.data;
 
       if (!submission) {
-        document.getElementById("student-detail-content").innerHTML = "<p>Khong tim thay bai thi.</p>";
+        document.getElementById("student-detail-content").innerHTML = "<p>Không tìm thấy bài thi.</p>";
         return;
       }
 
       document.getElementById("student-modal-title").textContent = `${submission.student_name} - ${submission.exam_title}`;
       document.getElementById("student-detail-content").innerHTML = window.AppUI.renderSubmissionDetail(submission);
     } catch (error) {
-      document.getElementById("student-detail-content").innerHTML = `<p style="color: red;">Loi: ${error.message}</p>`;
+      document.getElementById("student-detail-content").innerHTML = `<p style="color: red;">Lỗi: ${error.message}</p>`;
     }
   }
 
@@ -36,9 +40,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }).format(date);
   }
 
-  function renderResults(results) {
-    latestResults = results;
-    tableBody.innerHTML = results.map((submission) => `
+  function renderPage() {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = allResults.slice(start, start + PAGE_SIZE);
+
+    tableBody.innerHTML = pageRows.map((submission) => `
       <tr class="hover:bg-slate-50">
         <td class="py-2 px-3 font-semibold">${submission.exam_title || "-"}</td>
         <td class="py-2 px-3">${submission.subject_name || "-"}</td>
@@ -47,16 +53,28 @@ document.addEventListener("DOMContentLoaded", () => {
         <td class="py-2 px-3">${window.AppUI.renderStatus(submission.grading_status || "published")}</td>
         <td class="py-2 px-3">${formatDateTime(submission.graded_at)}</td>
         <td class="py-2 px-3">
-          <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" data-student-detail="${submission.id}">Xem chi tiet</button>
+          <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" data-student-detail="${submission.id}">Xem chi tiết</button>
         </td>
       </tr>
-    `).join("") || '<tr><td colspan="7" class="py-3 px-3 text-slate-400">Khong tim thay ket qua da cong bo.</td></tr>';
+    `).join("") || '<tr><td colspan="7" class="py-3 px-3 text-slate-400">Không tìm thấy kết quả đã công bố.</td></tr>';
 
     document.querySelectorAll("[data-student-detail]").forEach((button) => {
       button.addEventListener("click", () => {
         showSubmissionDetail(button.dataset.studentDetail);
       });
     });
+
+    window.AppUI.renderPagination("student-pagination", allResults.length, currentPage, PAGE_SIZE, (p) => {
+      currentPage = p;
+      renderPage();
+    });
+  }
+
+  function renderResults(results) {
+    latestResults = results;
+    allResults = results;
+    currentPage = 1;
+    renderPage();
   }
 
   document.getElementById("student-fill-demo-btn").addEventListener("click", () => {
