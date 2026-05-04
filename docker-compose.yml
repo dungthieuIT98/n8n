@@ -66,7 +66,32 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
 
+  api:
+    build:
+      context: ./ai-exam-grading-api
+      dockerfile: Dockerfile
+    container_name: setup-api
+    restart: unless-stopped
+    depends_on:
+      app-postgres:
+        condition: service_healthy
+    ports:
+      - "3010:3010"
+    environment:
+      PORT: 3010
+      APP_HOST: 0.0.0.0
+      DB_HOST: app-postgres
+      DB_PORT: 5432
+      DB_NAME: app
+      DB_USER: app
+      DB_PASSWORD: app
+      DB_SSL: false
+      N8N_BASE_URL: http://n8n:5678/webhook
+    volumes:
+      - api_uploads:/app/uploads
+
 volumes:
   n8n_data:
   postgres_data:
   app_postgres_data:
+  api_uploads:
