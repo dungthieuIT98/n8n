@@ -155,21 +155,38 @@
       return `<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Chưa có dữ liệu câu hỏi vì bài nộp đang lỗi hoặc chưa trích xuất xong.</div>`;
     }
 
-    return questions.map((item) => `
-      <div class="rounded-xl border border-slate-200 p-4 space-y-2">
+    return questions.map((item) => {
+      const no = item.no ?? item.question_no ?? "?";
+      const questionText = item.question_text || item.question || null;
+      const studentAnswer = item.student_answer || null;
+      const correctAnswer = item.correct_answer || null;
+      const feedback = item.feedback || item.explanation || item.comment || null;
+
+      const earned = Number(item.earned_score ?? item.earned ?? item.score ?? NaN);
+      const max = Number(item.max_score ?? item.max ?? item.total ?? NaN);
+      const hasScore = Number.isFinite(earned) && Number.isFinite(max) && max > 0;
+      const scoreText = hasScore ? `${earned}/${max}đ` : (item.score != null ? item.score : "-");
+
+      const resultStr = String(item.result || item.verdict || "").toLowerCase();
+      const isDung = hasScore
+        ? earned >= max
+        : (resultStr.includes("dung") || resultStr.includes("correct") || item.is_correct === true);
+
+      return `
+      <div class="rounded-xl border ${isDung ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"} p-4 space-y-2">
         <div class="flex items-center justify-between gap-3">
-          <div class="font-extrabold">Câu ${item.no}</div>
-          <div>${renderStatus(item.result === "Dung" ? "approved" : "failed")}</div>
+          <div class="font-extrabold">Câu ${no}</div>
+          <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${isDung ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}">${scoreText}</span>
         </div>
         <div class="text-sm space-y-1">
-          <div><span class="font-semibold">Đề bài:</span> ${item.question}</div>
-          <div><span class="font-semibold">Trả lời:</span> ${item.student_answer}</div>
-          <div><span class="font-semibold">Đáp án đúng:</span> ${item.correct_answer}</div>
-          <div><span class="font-semibold">Điểm:</span> ${item.score}</div>
-          <div><span class="font-semibold">Giải thích:</span> ${item.explanation}</div>
+          ${questionText ? `<div><span class="font-semibold">Đề bài:</span> ${questionText}</div>` : ""}
+          ${studentAnswer ? `<div><span class="font-semibold">Trả lời:</span> ${studentAnswer}</div>` : ""}
+          ${correctAnswer ? `<div><span class="font-semibold">Đáp án đúng:</span> ${correctAnswer}</div>` : ""}
+          ${feedback ? `<div><span class="font-semibold">Giải thích:</span> ${feedback}</div>` : ""}
         </div>
       </div>
-    `).join("");
+    `;
+    }).join("");
   }
 
   function renderSubmissionDetail(submission) {
