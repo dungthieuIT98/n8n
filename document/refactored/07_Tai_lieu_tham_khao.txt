@@ -1,0 +1,50 @@
+TÀI LIỆU THAM KHẢO
+================================================================
+[ Ước tính: ~1 trang ]
+================================================================
+
+[1]  OpenAI, "GPT-4.1 API Documentation," 2025. [Online].
+     Available: https://platform.openai.com/docs
+
+[2]  Mistral AI, "Mistral OCR Documentation," 2025. [Online].
+     Available: https://docs.mistral.ai
+
+[3]  PostgreSQL Global Development Group, "PostgreSQL 15 Documentation,"
+     2025. [Online]. Available: https://www.postgresql.org/docs/
+
+[4]  n8n GmbH, "n8n Workflow Automation Documentation," 2025. [Online].
+     Available: https://docs.n8n.io/
+
+[5]  Node.js Foundation, "Node.js Documentation," 2025. [Online].
+     Available: https://nodejs.org/en/docs
+
+[6]  Express.js, "Express Framework Documentation," 2025. [Online].
+     Available: https://expressjs.com/
+
+[7]  Mozilla Developer Network, "JavaScript Documentation," 2025.
+     [Online]. Available: https://developer.mozilla.org/en-US/docs/Web/JavaScript
+
+[8]  I. Goodfellow, Y. Bengio, and A. Courville, Deep Learning.
+     Cambridge, MA: MIT Press, 2016.
+
+[9]  D. Jurafsky and J. H. Martin, Speech and Language Processing,
+     3rd ed. Stanford University, 2023. [Online].
+     Available: https://web.stanford.edu/~jurafsky/slp3/
+
+[10] R. Szeliski, Computer Vision: Algorithms and Applications,
+     2nd ed. Springer, 2022.
+
+[11] R. S. Pressman, Software Engineering: A Practitioner's Approach,
+     8th ed. New York: McGraw-Hill, 2014.
+
+[12] Gradescope, "AI-Assisted Grading," 2025. [Online].
+     Available: https://www.gradescope.com
+
+[13] Turnitin, "AI Writing Detection and Feedback," 2025. [Online].
+     Available: https://www.turnitin.com
+
+[14] Docker Inc., "Docker Compose Documentation," 2025. [Online].
+     Available: https://docs.docker.com/compose/
+
+[15] Tailwind CSS, "Tailwind CSS Documentation," 2025. [Online].
+     Available: https://tailwindcss.com/docs

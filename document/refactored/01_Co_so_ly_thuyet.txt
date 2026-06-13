@@ -1,0 +1,185 @@
+CHƯƠNG 1 – CƠ SỞ LÝ THUYẾT
+================================================================
+[ Ước tính: ~6 trang ]
+================================================================
+
+1.1 HỆ THỐNG HỖ TRỢ HỌC TẬP THÔNG MINH
+-----------------------------------------
+Hệ thống hỗ trợ học tập thông minh (Intelligent Learning System) là sự
+kết hợp giữa công nghệ thông tin, trí tuệ nhân tạo và phân tích dữ liệu
+nhằm tự động hóa các quy trình giáo dục, cá nhân hóa trải nghiệm học tập
+và giảm tải công việc thủ công cho giảng viên.
+
+Các nền tảng tiêu biểu trên thế giới như Coursera, Khan Academy và
+Gradescope đã ứng dụng AI để hỗ trợ chấm bài tự động, phân tích năng lực
+học tập và đề xuất nội dung phù hợp theo từng người dùng. Hướng đi này
+đang được mở rộng mạnh mẽ nhờ sự phát triển của LLM và OCR.
+
+Đề tài xây dựng hệ thống AI Exam Grading Platform theo mô hình này,
+tập trung vào ba chức năng cốt lõi: chấm bài tự động, đọc văn bản và
+quản lý lịch học — phục vụ trực tiếp cho giáo viên và sinh viên.
+
+
+1.2 AI AGENT
+-------------
+AI Agent là thực thể phần mềm có khả năng nhận biết môi trường, xử lý
+thông tin và thực thi hành động tự động nhằm đạt mục tiêu xác định trước.
+Khác với chương trình truyền thống hoạt động theo tập lệnh cố định, AI
+Agent có khả năng suy luận, đưa ra quyết định và tương tác linh hoạt dựa
+trên ngữ cảnh đầu vào.
+
+Cấu trúc một AI Agent gồm bốn thành phần chính:
+
+  ┌──────────────────────────────────────────────────────┐
+  │  Thu thập dữ liệu → Xử lý tri thức (LLM)            │
+  │       ↓                    ↓                         │
+  │  Lập kế hoạch  →  Thực thi hành động (API/Tool)     │
+  └──────────────────────────────────────────────────────┘
+
+Với sự phát triển của GPT-4, Claude và Gemini, AI Agent ngày càng xử lý
+được các tác vụ phức tạp trong ngôn ngữ tự nhiên. Trong giáo dục, Agent
+được ứng dụng để chấm bài, giải thích kiến thức, phân tích kết quả học
+tập và gợi ý tài liệu.
+
+Trong hệ thống này, AI Agent được triển khai thông qua các workflow n8n,
+kết hợp OCR và LLM để tự động xử lý toàn bộ quy trình từ nhận bài —
+nhận dạng nội dung — chấm điểm — lưu kết quả.
+
+Thách thức chính khi dùng AI Agent trong giáo dục: đảm bảo độ chính xác,
+kiểm soát lỗi suy luận và tính minh bạch trong đánh giá.
+
+
+1.3 LARGE LANGUAGE MODEL (LLM)
+--------------------------------
+LLM là các mô hình AI được huấn luyện trên tập văn bản khổng lồ, sử dụng
+kiến trúc Transformer để hiểu và sinh ngôn ngữ tự nhiên. LLM có khả năng
+trả lời câu hỏi, tóm tắt, dịch thuật, phân tích ngữ nghĩa và hỗ trợ
+suy luận logic.
+
+Các mô hình phổ biến hiện nay:
+
+  | Mô hình       | Nhà phát triển | Đặc điểm nổi bật              |
+  |---------------|----------------|-------------------------------|
+  | GPT-4o-mini   | OpenAI         | Nhanh, chi phí thấp, đa năng  |
+  | Claude 3      | Anthropic      | Suy luận tốt, context dài     |
+  | Gemini 1.5    | Google         | Multimodal, tích hợp Google   |
+  | Mistral       | Mistral AI     | Mã nguồn mở, OCR mạnh         |
+
+Trong hệ thống, LLM đóng vai trò phân tích nội dung bài làm sau khi OCR
+trích xuất văn bản, so sánh với đáp án/rubric của giáo viên và đưa ra
+điểm số kèm nhận xét. Đây là lớp xử lý trí tuệ cốt lõi của toàn bộ
+pipeline chấm điểm.
+
+Hạn chế cần lưu ý: LLM có thể sinh thông tin sai lệch (hallucination),
+chi phí API cao khi xử lý số lượng lớn và kết quả phụ thuộc nhiều vào
+chất lượng prompt.
+
+
+1.4 OCR VÀ COMPUTER VISION
+----------------------------
+OCR (Optical Character Recognition) là công nghệ nhận dạng ký tự quang
+học, chuyển đổi văn bản trong ảnh hoặc PDF scan thành dữ liệu số có thể
+xử lý bằng máy tính.
+
+Trong hệ thống, OCR là bước tiền xử lý bắt buộc: bài làm sinh viên được
+nộp dưới dạng PDF/ảnh, OCR sẽ trích xuất toàn bộ nội dung văn bản trước
+khi LLM tiến hành đánh giá.
+
+Hệ thống sử dụng Mistral OCR — mô hình OCR tích hợp AI với độ chính xác
+cao cho cả văn bản in và chữ viết tay, hỗ trợ tiếng Việt.
+
+Pipeline xử lý:
+
+  File PDF/ảnh → Mistral OCR → Văn bản thuần → LLM chấm điểm
+
+< ẢNH: Sơ đồ pipeline OCR → LLM (flow diagram) >
+
+Thách thức: chất lượng nhận dạng phụ thuộc vào độ rõ nét của ảnh đầu
+vào; chữ viết tay xấu hoặc ảnh chụp nghiêng có thể làm giảm độ chính xác.
+
+
+1.5 CÔNG NGHỆ NỀN TẢNG
+------------------------
+
+1.5.1 Node.js và ExpressJS
+
+Node.js là môi trường thực thi JavaScript phía máy chủ, xây dựng trên
+V8 Engine, hỗ trợ xử lý bất đồng bộ và hướng sự kiện — phù hợp cho hệ
+thống cần xử lý nhiều request đồng thời.
+
+ExpressJS là framework web tối giản trên Node.js, cung cấp routing,
+middleware và quản lý request/response. Kiến trúc RESTful API của hệ
+thống được xây dựng hoàn toàn trên ExpressJS.
+
+Vai trò trong hệ thống:
+  - Xác thực người dùng (JWT)
+  - Tiếp nhận file upload (đề thi, đáp án, bài làm)
+  - Điều phối dữ liệu giữa frontend ↔ PostgreSQL ↔ n8n
+  - Cung cấp REST API cho toàn bộ nghiệp vụ
+
+1.5.2 n8n Workflow Automation
+
+n8n là nền tảng workflow automation mã nguồn mở, hỗ trợ kết nối nhiều
+dịch vụ thông qua giao diện kéo-thả (low-code). Mỗi workflow gồm các
+node đại diện cho một tác vụ cụ thể: nhận webhook, gọi API, xử lý file,
+ghi database, gửi thông báo...
+
+< ẢNH: Giao diện workflow n8n (screenshot thực tế) >
+
+Trong hệ thống, n8n đảm nhiệm toàn bộ lớp xử lý AI:
+  - Workflow upload_exam: trích xuất đáp án từ file giáo viên
+  - Workflow upload_answer: OCR bài làm sinh viên
+  - Workflow auto_grade: gửi sang LLM, lưu kết quả về PostgreSQL
+
+Ưu điểm: dễ tích hợp đa mô hình AI, giảm độ phức tạp backend, theo dõi
+trực quan từng bước xử lý.
+
+1.5.3 PostgreSQL
+
+PostgreSQL là hệ quản trị cơ sở dữ liệu quan hệ mã nguồn mở, tuân thủ
+chuẩn ACID, nổi bật với hiệu năng cao, hỗ trợ JSON và khả năng mở rộng
+tốt.
+
+Trong hệ thống, PostgreSQL lưu trữ toàn bộ dữ liệu nghiệp vụ: tài khoản
+người dùng, lớp học, môn học, đề thi, đáp án, bài nộp, kết quả chấm điểm
+và nhật ký hệ thống. Một instance PostgreSQL riêng được dùng cho n8n lưu
+lịch sử thực thi workflow.
+
+
+1.6 TÌNH HÌNH NGHIÊN CỨU
+--------------------------
+
+Ngoài nước:
+Các hệ thống chấm điểm tự động bằng AI đã được nghiên cứu mạnh trên thế
+giới. Gradescope (Mỹ) và Turnitin tích hợp AI hỗ trợ chấm bài tự luận.
+Nghiên cứu gần đây tập trung kết hợp OCR + LLM để xử lý bài thi viết
+tay, tăng tính công bằng và minh bạch trong đánh giá tự động.
+
+Trong nước:
+Tại Việt Nam, nghiên cứu chủ yếu tập trung vào nhận diện phiếu trắc
+nghiệm và OCR tiếng Việt. Việc áp dụng LLM để chấm bài tự luận tiếng
+Việt còn hạn chế do dữ liệu huấn luyện và chi phí triển khai. Hầu hết
+các hệ thống hiện nay chưa tích hợp đồng bộ OCR + AI grading + workflow
+automation trong một nền tảng hoàn chỉnh.
+
+
+1.7 HƯỚNG TIẾP CẬN CỦA ĐỀ TÀI
+--------------------------------
+Dựa trên phân tích trên, đề tài xác định hướng tiếp cận theo kiến trúc
+tách rời (decoupled architecture):
+
+  ┌─────────────┐    REST API    ┌──────────────┐
+  │  Frontend   │ ←────────────→ │  ExpressJS   │
+  └─────────────┘                └──────┬───────┘
+                                        │ trigger
+                                 ┌──────▼───────┐
+                                 │  n8n (AI)    │
+                                 │  OCR + LLM   │
+                                 └──────┬───────┘
+                                        │ read/write
+                                 ┌──────▼───────┐
+                                 │  PostgreSQL  │
+                                 └──────────────┘
+
+Ưu điểm: mỗi lớp độc lập, dễ nâng cấp mô hình AI mà không ảnh hưởng
+backend; dễ mở rộng quy mô; workflow AI có thể tái sử dụng.

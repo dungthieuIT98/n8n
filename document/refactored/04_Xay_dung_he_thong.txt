@@ -1,0 +1,300 @@
+CHƯƠNG 4 – XÂY DỰNG VÀ TRIỂN KHAI HỆ THỐNG
+================================================================
+[ Ước tính: ~8 trang ]
+================================================================
+
+4.1 MÔI TRƯỜNG PHÁT TRIỂN
+---------------------------
+Hệ thống được đóng gói và triển khai bằng Docker Compose, đảm bảo nhất
+quán giữa môi trường phát triển và production.
+
+  | Thành phần       | Công nghệ / Version     | Cổng   |
+  |------------------|-------------------------|--------|
+  | Backend API      | Node.js 20 + ExpressJS  | 3010   |
+  | Workflow Engine  | n8n (self-hosted)        | 5678   |
+  | Cơ sở dữ liệu   | PostgreSQL 15           | 5432   |
+  | File Storage     | Google Drive API        | —      |
+  | OCR              | Mistral OCR API         | —      |
+  | LLM Grading      | OpenAI GPT-4.1-mini     | —      |
+  | Frontend         | Vanilla JS + Tailwind   | static |
+
+Cấu hình Docker Compose kết nối các service qua biến môi trường:
+  DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+  N8N_BASE_URL, N8N_WEBHOOK_SECRET
+  OPENAI_API_KEY, MISTRAL_API_KEY
+  GOOGLE_DRIVE_FOLDER_ID
+
+
+4.2 XÂY DỰNG BACKEND VỚI EXPRESSJS
+-------------------------------------
+
+4.2.1 Khởi động và Bootstrap
+
+Khi server khởi động, hệ thống tự động thực hiện:
+  1. Kết nối PostgreSQL và chạy migration script tạo schema
+  2. Tạo thư mục uploads/ (nếu chưa tồn tại)
+  3. Seed dữ liệu mẫu (teachers, classes, subjects)
+  4. Mount các route và khởi lắng nghe cổng 3010
+
+4.2.2 Cấu trúc project
+
+  src/
+  ├── server.js          -- entry point, bootstrap
+  ├── middleware/
+  │   ├── auth.js        -- requireAuth(), injectTeacherFilter()
+  │   └── upload.js      -- multer config
+  ├── routes/
+  │   ├── auth.js
+  │   ├── exams.js
+  │   ├── submissions.js
+  │   ├── grading.js
+  │   └── entity.js      -- Generic CRUD handler
+  ├── db/
+  │   ├── pool.js        -- PostgreSQL connection pool
+  │   └── schema.sql     -- DDL toàn bộ schema
+  └── public/            -- static frontend files
+
+4.2.3 Generic Entity API
+
+Để tránh lặp code, hệ thống định nghĩa ENTITY_CONFIG map từng entity
+sang config truy vấn:
+
+  // entity.js (rút gọn)
+  const ENTITY_CONFIG = {
+    exams: {
+      table:      'exams',
+      searchCols: ['title', 'exam_code'],
+      filterCols: ['teacher_id', 'status', 'class_id'],
+      joins:      'LEFT JOIN classes c ON exams.class_id = c.id',
+      select:     'exams.*, c.name AS class_name',
+    },
+    submissions: {
+      table:      'submissions',
+      searchCols: ['student_name'],
+      filterCols: ['exam_id', 'status'],
+      joins:      'LEFT JOIN exams e ON submissions.exam_id = e.id',
+      select:     'submissions.*, e.title AS exam_title',
+    },
+    // ...
+  }
+
+  router.get('/:entity', requireAuth, async (req, res) => {
+    const config = ENTITY_CONFIG[req.params.entity]
+    if (!config) return res.status(404).json({ error: 'Not found' })
+    const { rows } = await db.query(buildSelectQuery(config, req.query))
+    res.json(rows)
+  })
+
+4.2.4 Upload File và Trigger n8n
+
+Khi giáo viên upload đề thi, ExpressJS xử lý file bằng multer rồi
+trigger workflow n8n ngay sau khi lưu metadata:
+
+  // exams.js (rút gọn)
+  router.post('/:id/upload', requireAuth, upload.fields([
+    { name: 'question_file' },
+    { name: 'answer_file' }
+  ]), async (req, res) => {
+    // 1. Lưu file path vào PostgreSQL
+    await db.query(
+      'UPDATE exams SET file_path=$1, answer_path=$2 WHERE id=$3',
+      [req.files.question_file[0].path,
+       req.files.answer_file[0].path, req.params.id]
+    )
+    // 2. Trả response ngay (Fire-and-Forget)
+    res.json({ success: true, message: 'Processing in background' })
+    // 3. Trigger n8n webhook bất đồng bộ
+    fetch(process.env.N8N_BASE_URL + '/webhook/upload-exam-api', {
+      method: 'POST',
+      body: JSON.stringify({ exam_id: req.params.id, ...req.body })
+    })
+  })
+
+
+4.3 XÂY DỰNG AI WORKFLOW BẰNG N8N
+------------------------------------
+
+4.3.1 Tích hợp Mistral OCR
+
+Quy trình OCR một file PDF qua Mistral API:
+
+  Bước 1 — Upload file lên Mistral:
+    POST https://api.mistral.ai/v1/files
+    Content-Type: multipart/form-data
+    → Response: { file_id, expires_at }
+
+  Bước 2 — Lấy signed URL:
+    GET https://api.mistral.ai/v1/files/{file_id}/url
+    → Response: { url }
+
+  Bước 3 — Gọi OCR model:
+    POST https://api.mistral.ai/v1/ocr
+    Body: { model: "mistral-ocr-latest", document: { url } }
+    → Response: { pages: [{ markdown }] }
+
+  Bước 4 — Ghép Markdown từ tất cả pages:
+    full_text = pages.map(p => p.markdown).join('\n\n')
+
+< ẢNH: Node cấu hình Mistral OCR trong n8n (HTTP Request node) >
+
+4.3.2 Tích hợp GPT-4.1-mini — Structured Extraction
+
+Sau OCR, GPT phân tích Markdown thành JSON có cấu trúc.
+
+Prompt trích xuất đáp án (rút gọn):
+
+  "Phân tích nội dung sau và trả về JSON theo format:
+   {
+     'questions': [{
+       'id': 1,
+       'content': '...',
+       'correct_answer': '...',
+       'max_score': 1.0,
+       'rubric': '...'
+     }]
+   }
+   Nội dung đáp án:
+   {{$json.ocr_text}}"
+
+Prompt chấm điểm (rút gọn):
+
+  "Chấm bài theo rubric sau. Với mỗi câu hỏi, cho điểm và nhận xét.
+   Đáp án: {{$json.answer_extract}}
+   Bài làm sinh viên: {{$json.submission_extract}}
+   Trả về JSON: {
+     'scores': [{ 'question_id', 'score', 'comment' }],
+     'total_score': ...,
+     'overall_feedback': '...'
+   }"
+
+4.3.3 Workflow auto_grade — Chi tiết triển khai
+
+Workflow chạy cron 0 * * * *, xử lý theo batch để tránh timeout:
+
+  [Schedule Trigger]
+       ↓
+  [PostgreSQL Query]
+    SELECT s.id, s.submission_extract,
+           e.answer_extract, e.total_score
+    FROM   submissions s
+    JOIN   exams e ON s.exam_id = e.id
+    WHERE  s.status = 'extracted'
+      AND  e.status = 'active'
+      AND  NOT EXISTS (
+             SELECT 1 FROM grading_results gr
+             WHERE gr.submission_id = s.id
+               AND gr.status != 'regrade_requested'
+           )
+    LIMIT  10
+       ↓
+  [Split in Batches] — xử lý từng bài
+       ↓
+  [OpenAI GPT-4.1-mini] — grading prompt
+       ↓
+  [Code Node] — parse JSON, tính total_score
+       ↓
+  [PostgreSQL INSERT]
+    INSERT INTO grading_results
+      (submission_id, exam_id, total_score, feedback,
+       grading_detail, attempt_no, graded_by)
+    VALUES (...)
+    ON CONFLICT (submission_id, attempt_no) DO UPDATE ...
+       ↓
+  [PostgreSQL UPDATE]
+    UPDATE submissions SET status='graded' WHERE id=...
+       ↓
+  [system_logs INSERT]
+
+< ẢNH: Screenshot workflow auto_grade_submissions trong n8n >
+
+
+4.4 XÂY DỰNG CHỨC NĂNG QUẢN LÝ LỊCH HỌC
+------------------------------------------
+Chức năng lịch học được triển khai thông qua bảng exam_periods, quản lý
+các đợt thi với API CRUD chuẩn:
+
+  | API Endpoint               | Chức năng                        |
+  |----------------------------|----------------------------------|
+  | GET  /api/exam-periods     | Danh sách đợt thi                |
+  | POST /api/exam-periods     | Tạo đợt thi mới                  |
+  | PUT  /api/exam-periods/:id | Cập nhật thông tin đợt thi       |
+  | DELETE /api/exam-periods/:id | Xóa đợt thi                   |
+
+Schema bảng exam_periods:
+  id, period_code, name, start_date, end_date,
+  description, teacher_id, created_at
+
+Frontend hiển thị lịch thi theo dạng bảng timeline, cho phép giáo viên
+tạo và chỉnh sửa đợt thi trực tiếp qua modal form.
+
+
+4.5 XÂY DỰNG GIAO DIỆN NGƯỜI DÙNG
+------------------------------------
+
+4.5.1 Teacher Portal
+
+Dashboard hiển thị thống kê tổng quan bằng Chart.js:
+  - Số bài thi đang active
+  - Tổng bài nộp / đã chấm / chờ duyệt
+  - Biểu đồ điểm phân bố theo lớp
+
+< ẢNH: Screenshot Teacher Dashboard — thống kê + biểu đồ >
+
+Màn hình quản lý kết quả chấm (grading review):
+  - Bảng danh sách: tên SV, điểm AI, trạng thái
+  - Chi tiết: nội dung OCR, điểm từng câu, nhận xét AI
+  - Actions: Approve / Override / Regrade
+
+< ẢNH: Screenshot màn hình Grading Review của giáo viên >
+
+4.5.2 Student Portal
+
+Giao diện đơn giản, tập trung vào 3 thao tác chính:
+  1. Chọn bài thi đang active → Upload PDF bài làm
+  2. Theo dõi trạng thái: Pending → Processing → Graded
+  3. Xem kết quả: điểm số + nhận xét AI (sau khi published)
+
+< ẢNH: Screenshot Student Portal — upload bài + xem kết quả >
+
+4.5.3 Kiến trúc Frontend
+
+Bốn module dùng chung cho cả hai portal:
+
+  AppState.js   — lưu session, user info, role
+  AppApi.js     — wrapper fetch(), tự đính kèm Bearer token,
+                  xử lý lỗi 401/403 redirect về login
+  AppUI.js      — render bảng, modal, loading spinner, toast
+  AppLayout.js  — sidebar navigation, responsive layout
+
+
+4.6 TRIỂN KHAI HỆ THỐNG
+-------------------------
+Hệ thống được triển khai bằng Docker Compose với 3 service:
+
+  docker-compose.yml:
+  ┌─────────────────────────────────────────────────┐
+  │  services:                                      │
+  │    api:                                         │
+  │      image: node:20-alpine                      │
+  │      ports: ["3010:3010"]                       │
+  │      env_file: .env                             │
+  │      depends_on: [postgres]                     │
+  │                                                 │
+  │    postgres:                                    │
+  │      image: postgres:15                         │
+  │      volumes: [pgdata:/var/lib/postgresql/data] │
+  │                                                 │
+  │    n8n:                                         │
+  │      image: n8nio/n8n                           │
+  │      ports: ["5678:5678"]                       │
+  │      volumes: [n8n_data:/home/node/.n8n]        │
+  │      env_file: .env                             │
+  └─────────────────────────────────────────────────┘
+
+Các bước triển khai:
+  1. Clone repo, tạo file .env từ .env.example
+  2. docker compose up -d
+  3. Truy cập n8n (localhost:5678), import 3 workflow JSON
+  4. Cấu hình credentials: OpenAI, Mistral, Google Drive
+  5. Activate các workflow
+  6. Truy cập hệ thống tại localhost:3010

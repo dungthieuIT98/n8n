@@ -135,19 +135,6 @@ CREATE INDEX IF NOT EXISTS grading_results_submission_attempt_idx
   ON grading_results(submission_id, attempt_no DESC);
 
 -- Migration (nếu bảng cũ đã tồn tại):
--- ALTER TABLE grading_results RENAME COLUMN grading_attempt TO attempt_no;
--- ALTER TABLE grading_results ALTER COLUMN submission_id SET NOT NULL;
--- ALTER TABLE grading_results ALTER COLUMN status SET DEFAULT 'graded';
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS exam_id;
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS exam_code;
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS exam_title;
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS class_code;
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS subject_code;
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS student_code;
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS student_name;
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS notes;
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS created_by;
--- ALTER TABLE grading_results DROP COLUMN IF EXISTS updated_by;
 
 CREATE TABLE IF NOT EXISTS system_logs (
   id                   SERIAL PRIMARY KEY,

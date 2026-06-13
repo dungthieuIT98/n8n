@@ -46,17 +46,7 @@
     return payload;
   }
 
-  function mockDetailRequest(entity, id) {
-    const mockData = window.MockData || {};
-    const collection = mockData[entity] || [];
-    const item = collection.find(x => String(x.id) === String(id));
-    if (item) {
-      return Promise.resolve({ success: true, data: item });
-    }
-    return Promise.reject(new Error(`Không tìm thấy: ${entity} ${id}`));
-  }
-
-  function list(entity, params) {
+function list(entity, params) {
     return request(`/api/${entity}${buildQuery(params)}`);
   }
 
@@ -124,11 +114,7 @@
     });
   }
 
-  function resetDemoData() {
-    return request('/api/admin/reset-demo-data', { method: 'POST' });
-  }
-
-  function getSubmissionResult(submissionId) {
+function getSubmissionResult(submissionId) {
     return request(`/api/submissions/${submissionId}/result`);
   }
 
@@ -159,7 +145,6 @@
     studentResults,
     publicExams,
     submitExamSubmission,
-    resetDemoData,
     getSubmissionResult,
     updateGrading,
     deleteGrading,

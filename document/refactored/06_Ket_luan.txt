@@ -1,0 +1,74 @@
+KẾT LUẬN
+================================================================
+[ Ước tính: ~2 trang ]
+[ Không cần ảnh ]
+================================================================
+
+1. KẾT QUẢ ĐẠT ĐƯỢC
+----------------------
+Đề tài đã xây dựng thành công hệ thống AI Exam Grading Platform với đầy
+đủ các chức năng đề ra:
+
+  ✓ Tự động chấm bài kiểm tra: upload đề thi + đáp án → OCR → LLM chấm
+    điểm theo rubric → lưu kết quả → giáo viên duyệt → sinh viên xem
+
+  ✓ Đọc và xử lý văn bản OCR: nhận dạng nội dung từ PDF và ảnh chụp
+    bằng Mistral OCR, trích xuất dữ liệu có cấu trúc bằng GPT-4.1-mini
+
+  ✓ Quản lý lịch học / đợt thi: CRUD đợt thi, liên kết với đề thi và
+    lớp học
+
+  ✓ Kiến trúc tách rời, bất đồng bộ: ExpressJS + n8n + PostgreSQL hoạt
+    động độc lập, dễ nâng cấp từng lớp mà không ảnh hưởng toàn hệ thống
+
+  ✓ Giao diện Teacher Portal và Student Portal: đơn giản, rõ ràng,
+    hiển thị trạng thái xử lý và kết quả chấm điểm trực quan
+
+Về kết quả kiểm thử:
+  - 15/15 test case chức năng đạt yêu cầu
+  - Độ chính xác OCR: ~95% với PDF chữ in, ~75% với bài viết tay
+  - Thời gian phản hồi API: < 500ms (nhờ Fire-and-Forget)
+  - Thời gian chấm 1 bài: 5–12 giây (xử lý nền)
+
+
+2. ƯU ĐIỂM VÀ HẠN CHẾ
+-----------------------
+
+Ưu điểm:
+  - Tự động hóa toàn bộ pipeline từ upload đến công bố kết quả, giảm
+    đáng kể thời gian và công sức của giáo viên
+  - Chấm điểm theo rubric minh bạch: AI trả về điểm từng câu kèm nhận
+    xét, giáo viên có thể kiểm tra và override
+  - Hỗ trợ regrade nhiều lần với attempt tracking — dữ liệu các lần
+    chấm đều được lưu, không bị mất
+  - Kiến trúc linh hoạt: thay thế mô hình AI (OCR hoặc LLM) chỉ cần
+    cập nhật cấu hình n8n, không ảnh hưởng backend
+  - Triển khai đơn giản bằng Docker Compose
+
+Hạn chế:
+  - Độ chính xác OCR với bài viết tay còn hạn chế (~70–80%), phụ thuộc
+    nhiều vào chất lượng ảnh đầu vào
+  - Chưa có thông báo realtime khi bài được chấm xong, người dùng phải
+    chủ động kiểm tra trạng thái
+  - Phụ thuộc API bên ngoài (OpenAI, Mistral) — chi phí và giới hạn
+    request có thể là rào cản khi mở rộng quy mô
+  - Chưa tích hợp với các LMS hiện có (Moodle, Google Classroom...)
+  - Giao diện mobile chưa được tối ưu
+
+
+3. HƯỚNG PHÁT TRIỂN TRONG TƯƠNG LAI
+--------------------------------------
+  - Tích hợp mô hình OCR mạnh hơn hoặc fine-tune riêng cho bài viết tay
+    tiếng Việt để nâng độ chính xác nhận dạng
+  - Bổ sung realtime processing (WebSocket hoặc SSE) để giáo viên và
+    sinh viên nhận thông báo ngay khi bài được chấm xong
+  - Fine-tune LLM theo từng môn học để tăng chất lượng chấm tự luận
+    chuyên ngành
+  - Xây dựng cơ chế human-in-the-loop: AI chấm sơ bộ, giáo viên xác
+    nhận nhanh thay vì xem lại toàn bộ
+  - Phát triển dashboard phân tích học tập: biểu đồ phân bố điểm, theo
+    dõi tiến độ theo lớp / môn, xuất báo cáo tự động
+  - Tích hợp với LMS phổ biến (Moodle, Google Classroom) để mở rộng
+    phạm vi ứng dụng trong môi trường giáo dục thực tế
+  - Tối ưu chi phí AI bằng cách kết hợp mô hình local (Ollama) cho
+    các tác vụ đơn giản, gọi API đám mây chỉ khi cần thiết

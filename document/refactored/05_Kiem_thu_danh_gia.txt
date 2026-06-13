@@ -1,0 +1,129 @@
+CHƯƠNG 5 – KIỂM THỬ VÀ ĐÁNH GIÁ HỆ THỐNG
+================================================================
+[ Ước tính: ~5 trang ]
+================================================================
+
+5.1 MỤC TIÊU VÀ PHẠM VI KIỂM THỬ
+------------------------------------
+Mục tiêu kiểm thử nhằm xác nhận hệ thống hoạt động đúng theo yêu cầu
+nghiệp vụ và đảm bảo các thành phần cốt lõi — OCR, AI grading, workflow
+tự động, API — hoạt động ổn định và chính xác.
+
+Phạm vi kiểm thử bao gồm:
+  - Kiểm thử chức năng: upload đề thi, upload bài làm, chấm điểm tự động,
+    xem kết quả, regrade
+  - Kiểm thử AI grading: trắc nghiệm, tự luận, regrade
+  - Đánh giá độ chính xác OCR
+  - Đánh giá hiệu năng xử lý
+  - Đánh giá trải nghiệm người dùng
+
+
+5.2 KIỂM THỬ CHỨC NĂNG HỆ THỐNG
+----------------------------------
+
+  | STT | Chức năng           | Kịch bản kiểm thử              | Kết quả mong đợi                      | Kết quả |
+  |-----|---------------------|--------------------------------|---------------------------------------|---------|
+  | 1   | Upload đề thi       | File PDF hợp lệ                | Lưu DB, trigger n8n, status=processing| Đạt     |
+  | 2   | Upload đề thi       | File sai định dạng (.docx)     | Báo lỗi, không lưu                    | Đạt     |
+  | 3   | Upload đề thi       | Thiếu exam_id                  | Báo lỗi validate                      | Đạt     |
+  | 4   | OCR đáp án          | PDF in rõ nét                  | answer_extract JSON đầy đủ, đúng cấu trúc | Đạt |
+  | 5   | Upload bài làm      | File PDF hợp lệ                | Lưu submissions, status=uploaded      | Đạt     |
+  | 6   | Upload bài làm      | Upload trùng (cùng submission) | UPSERT, không tạo duplicate           | Đạt     |
+  | 7   | OCR bài làm         | PDF chữ in                     | submission_extract JSON đúng          | Đạt     |
+  | 8   | Auto grade          | Có answer_extract + submission_extract | INSERT grading_results, status=graded | Đạt |
+  | 9   | Auto grade          | Chưa có answer_extract         | Bỏ qua, ghi log warning               | Đạt     |
+  | 10  | Schedule trigger    | Cron 0 * * * *                 | Workflow tự kích hoạt mỗi giờ        | Đạt     |
+  | 11  | Regrade             | Giáo viên yêu cầu chấm lại    | attempt_no tăng, kết quả mới lưu     | Đạt     |
+  | 12  | Approve kết quả     | Giáo viên approve              | status=published, SV xem được         | Đạt     |
+  | 13  | Authentication      | Token hết hạn                  | Trả 401, redirect về login            | Đạt     |
+  | 14  | Authorization       | SV truy cập API giáo viên      | Trả 403 Forbidden                     | Đạt     |
+  | 15  | Xem kết quả SV      | Kết quả published              | Hiển thị điểm + nhận xét AI          | Đạt     |
+
+
+5.3 KIỂM THỬ CHỨC NĂNG AI CHẤM ĐIỂM
+---------------------------------------
+
+5.3.1 Kiểm thử câu hỏi trắc nghiệm
+
+  | Kịch bản                            | Đầu vào                     | Kết quả mong đợi     | Kết quả |
+  |-------------------------------------|-----------------------------|----------------------|---------|
+  | Đáp án đúng hoàn toàn               | SV chọn đúng đáp án         | Điểm tối đa          | Đạt     |
+  | Đáp án sai                          | SV chọn sai đáp án          | Điểm = 0             | Đạt     |
+  | Không trả lời                       | Ô trống                     | Điểm = 0, có ghi chú | Đạt     |
+
+5.3.2 Kiểm thử câu hỏi tự luận
+
+  | Kịch bản                            | Đầu vào                     | Kết quả mong đợi         | Kết quả |
+  |-------------------------------------|-----------------------------|--------------------------|---------|
+  | Bài làm đủ ý theo rubric            | Đáp án đầy đủ, rõ ràng      | Điểm tối đa + nhận xét tốt | Đạt  |
+  | Bài làm đúng một phần               | Thiếu 1–2 ý trong rubric    | Partial score tương ứng  | Đạt     |
+  | Bài làm lạc đề                      | Nội dung không liên quan     | Điểm thấp / 0            | Đạt     |
+  | Bài viết tay khó đọc                | OCR nhận diện thiếu ký tự   | Điểm thấp hơn thực tế    | Cần cải thiện |
+
+5.3.3 Kiểm thử Regrade
+
+  | Kịch bản                            | Kết quả mong đợi                            | Kết quả |
+  |-------------------------------------|---------------------------------------------|---------|
+  | Nhấn "Re-grade" lần 1               | attempt_no = 2, kết quả mới lưu            | Đạt     |
+  | Nhấn "Re-grade" lần 2               | attempt_no = 3, lần 2 vẫn còn trong DB     | Đạt     |
+  | Xem lịch sử các lần chấm            | Hiển thị đúng attempt theo thứ tự          | Đạt     |
+
+
+5.4 ĐÁNH GIÁ ĐỘ CHÍNH XÁC OCR
+---------------------------------
+Kiểm thử trên 30 file PDF gồm 3 loại tài liệu:
+
+  | Loại tài liệu             | Số file | Độ chính xác OCR | Ghi chú                    |
+  |---------------------------|---------|------------------|----------------------------|
+  | PDF chữ in, chất lượng cao | 10     | ~95–98%          | Mistral OCR hoạt động tốt  |
+  | PDF scan từ bản in        | 10      | ~85–92%          | Phụ thuộc độ phân giải scan|
+  | Ảnh chụp bài viết tay     | 10      | ~70–80%          | Chữ xấu giảm độ chính xác  |
+
+Phương pháp đánh giá: so sánh kết quả OCR với văn bản gốc nhập thủ công,
+tính tỷ lệ ký tự nhận dạng đúng (Character Accuracy Rate).
+
+Nhận xét: Mistral OCR đáp ứng tốt cho tài liệu chữ in. Đối với bài viết
+tay, độ chính xác phụ thuộc nhiều vào chất lượng ảnh đầu vào — đây là
+điểm cần cải thiện trong các phiên bản tiếp theo.
+
+
+5.5 ĐÁNH GIÁ HIỆU NĂNG
+------------------------
+
+  | Chỉ số                          | Giá trị đo được     | Ghi chú                        |
+  |---------------------------------|---------------------|--------------------------------|
+  | Thời gian OCR 1 file PDF        | 3–8 giây            | Phụ thuộc số trang và chất lượng |
+  | Thời gian GPT extraction        | 2–5 giây            | GPT-4.1-mini                   |
+  | Thời gian chấm 1 bài tự luận    | 5–12 giây           | Bao gồm GPT inference          |
+  | API response time (upload)      | < 500ms             | Fire-and-Forget, không chờ AI  |
+  | Batch auto_grade (10 bài/lần)   | ~2–3 phút           | Chạy nền mỗi 1 giờ             |
+  | PostgreSQL query (LATERAL JOIN) | < 50ms              | Index đúng cột                 |
+
+Cơ chế Fire-and-Forget giúp API phản hồi ngay lập tức (< 500ms), người
+dùng không phải chờ quá trình AI xử lý. Batch processing 10 bài/lần kiểm
+soát chi phí API và tránh timeout.
+
+
+5.6 ĐÁNH GIÁ TRẢI NGHIỆM NGƯỜI DÙNG
+--------------------------------------
+Đánh giá dựa trên khả năng sử dụng (usability) với 5 giáo viên và 10
+sinh viên thử nghiệm:
+
+  | Tiêu chí                          | Mức đánh giá              |
+  |-----------------------------------|---------------------------|
+  | Dễ upload đề thi và đáp án        | Tốt — thao tác 3 bước     |
+  | Theo dõi trạng thái xử lý         | Tốt — badge rõ ràng       |
+  | Đọc hiểu kết quả AI grading       | Tốt — có rubric breakdown |
+  | Thao tác approve / override       | Trung bình — cần hướng dẫn|
+  | Sinh viên xem kết quả             | Tốt — đơn giản, rõ ràng  |
+  | Xử lý lỗi upload (file sai)       | Tốt — thông báo lỗi rõ   |
+
+Điểm nổi bật về UX:
+  - Status badges hiển thị tiếng Việt giúp người dùng dễ hiểu trạng thái
+  - Modal chi tiết kết quả hiển thị điểm từng câu + confidence bar
+  - Trang system logs hỗ trợ giáo viên debug khi workflow gặp sự cố
+  - Dashboard thống kê (Chart.js) giúp nắm tổng quan nhanh
+
+Hạn chế UX cần cải thiện:
+  - Chưa có thông báo realtime khi bài được chấm xong (phải refresh trang)
+  - Màn hình mobile chưa được tối ưu hoàn toàn

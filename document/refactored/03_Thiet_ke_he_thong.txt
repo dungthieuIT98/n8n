@@ -1,0 +1,279 @@
+CHƯƠNG 3 – THIẾT KẾ HỆ THỐNG
+================================================================
+[ Ước tính: ~10 trang ]
+================================================================
+
+3.1 KIẾN TRÚC TỔNG THỂ
+------------------------
+Hệ thống được thiết kế theo mô hình phân tầng kết hợp kiến trúc tách rời
+(decoupled architecture), gồm bốn lớp độc lập:
+
+  ┌─────────────────────────────────────────────────────────┐
+  │                    FRONTEND (Vanilla JS + Tailwind)     │
+  └────────────────────────┬────────────────────────────────┘
+                           │ REST API (HTTP/JSON)
+  ┌────────────────────────▼────────────────────────────────┐
+  │              EXPRESS API LAYER (Node.js)                │
+  │   Auth │ Routing │ File Upload │ DB Access │ n8n Trigger│
+  └──────┬─────────────────────────────┬────────────────────┘
+         │ read/write                  │ webhook trigger
+  ┌──────▼──────────┐        ┌─────────▼──────────────────┐
+  │   PostgreSQL    │        │   n8n ORCHESTRATION LAYER  │
+  │  (Business DB)  │◄───────│   OCR │ LLM │ Grading      │
+  └─────────────────┘        └─────────┬──────────────────┘
+                                       │ API calls
+                             ┌─────────▼──────────────────┐
+                             │  EXTERNAL AI SERVICES       │
+                             │  Mistral OCR │ GPT-4.1-mini │
+                             │  Google Drive (file store)  │
+                             └────────────────────────────┘
+
+< ẢNH: Sơ đồ kiến trúc tổng thể hệ thống (architecture diagram) >
+
+Nguyên tắc thiết kế cốt lõi: **Fire-and-Forget** — ExpressJS trả response
+ngay lập tức sau khi lưu dữ liệu, n8n xử lý AI hoàn toàn bất đồng bộ ở
+background. Người dùng không phải chờ OCR hay LLM hoàn thành.
+
+
+3.2 THIẾT KẾ BACKEND — EXPRESSJS
+----------------------------------
+
+3.2.1 Cấu trúc Route
+
+  | Route                  | Method        | Chức năng                      |
+  |------------------------|---------------|--------------------------------|
+  | /api/auth/login        | POST          | Đăng nhập, trả session token   |
+  | /api/auth/logout       | POST          | Hủy session                    |
+  | /api/exams             | GET/POST      | Danh sách / tạo đề thi         |
+  | /api/exams/:id         | PUT/DELETE    | Cập nhật / xóa đề thi         |
+  | /api/exams/:id/upload  | POST          | Upload đề thi + đáp án PDF     |
+  | /api/submissions       | GET/POST      | Danh sách / nộp bài làm        |
+  | /api/submissions/:id   | GET           | Chi tiết bài nộp               |
+  | /api/grading           | GET           | Kết quả chấm điểm              |
+  | /api/grading/:id       | PUT           | Approve / override điểm        |
+  | /api/student-results   | GET           | Sinh viên xem điểm             |
+  | /api/:entity           | GET/POST/PUT  | Generic CRUD (xem 3.2.3)       |
+
+3.2.2 Authentication & Authorization
+
+Hệ thống dùng Bearer Token kết hợp session storage:
+
+  1. Client gửi POST /api/auth/login (username + password)
+  2. Server xác thực, tạo session, trả token
+  3. Mọi request tiếp theo gửi kèm Authorization: Bearer <token>
+  4. Middleware requireAuth() kiểm tra token hợp lệ
+  5. Middleware injectTeacherFilter() tự động filter data theo teacher_id
+     → giáo viên chỉ thấy dữ liệu của chính mình
+
+3.2.3 Generic Entity API Pattern
+
+Để tránh lặp code CRUD, hệ thống áp dụng Generic Entity API:
+
+  ENTITY_CONFIG = {
+    teachers:        { table, searchCols, filterCols, joins, selectFields },
+    exams:           { table, searchCols, filterCols, joins, selectFields },
+    submissions:     { table, searchCols, filterCols, joins, selectFields },
+    grading_results: { table, searchCols, filterCols, joins, selectFields },
+    system_logs:     { table, searchCols, filterCols, joins, selectFields },
+  }
+
+Route /api/:entity ánh xạ động vào config tương ứng, tự build câu truy
+vấn SQL. Thêm entity mới chỉ cần bổ sung config, không viết thêm route.
+
+3.2.4 LATERAL JOIN Query Pattern
+
+Để lấy lần chấm mới nhất (hỗ trợ regrade nhiều lần):
+
+  SELECT s.*, gr.total_score, gr.feedback
+  FROM submissions s
+  LEFT JOIN LATERAL (
+    SELECT total_score, feedback
+    FROM   grading_results
+    WHERE  submission_id = s.id
+    ORDER  BY attempt_no DESC
+    LIMIT  1
+  ) gr ON true
+
+Pattern này đảm bảo luôn lấy đúng kết quả chấm gần nhất mà không cần
+subquery phức tạp hay xử lý phía application.
+
+
+3.3 THIẾT KẾ CƠ SỞ DỮ LIỆU
+-----------------------------
+
+3.3.1 Tổng quan schema
+
+Cơ sở dữ liệu chia thành hai nhóm bảng:
+
+  Master Data Tables (dữ liệu danh mục):
+    - teachers    : tài khoản giáo viên
+    - students    : tài khoản sinh viên
+    - classes     : lớp học
+    - subjects    : môn học
+
+  Core Business Tables (dữ liệu nghiệp vụ):
+    - exams            : đề thi + answer_extract (JSONB)
+    - submissions      : bài nộp + submission_extract (JSONB)
+    - grading_results  : kết quả chấm + grading_detail (JSONB)
+    - schedules        : lịch học / lịch thi
+    - system_logs      : nhật ký hệ thống
+
+Các trường JSONB (answer_extract, submission_extract, grading_detail) lưu
+dữ liệu AI output linh hoạt — không cần thay đổi schema khi LLM trả về
+format mới.
+
+3.3.2 Các bảng chính
+
+Bảng exams:
+  id, teacher_id, class_id, subject_id
+  title, exam_code, file_path, answer_path
+  answer_extract  JSONB   -- rubric do AI trích xuất
+  status          ENUM    -- draft | processing | ready | active | archived
+  version, created_at, updated_at
+
+Bảng submissions:
+  id, exam_id, student_id
+  file_path
+  submission_extract  JSONB   -- nội dung bài làm do OCR trích xuất
+  status              ENUM    -- uploaded | extracting | extracted | failed
+  submitted_at
+
+Bảng grading_results:
+  id, submission_id, exam_id
+  total_score, feedback
+  grading_detail  JSONB   -- chi tiết điểm từng câu, nhận xét AI
+  attempt_no              -- hỗ trợ regrade nhiều lần
+  graded_by       ENUM    -- ai | manual
+  status          ENUM    -- pending | approved | published
+  created_at
+
+Bảng system_logs:
+  id, workflow_name, entity_type, entity_id
+  action, status, message, created_at
+
+3.3.3 Biểu đồ ERD
+
+< ẢNH: ERD — quan hệ giữa teachers, classes, subjects, exams,
+  submissions, grading_results, students, schedules, system_logs >
+
+
+3.4 THIẾT KẾ AI WORKFLOW BẰNG N8N
+------------------------------------
+Hệ thống gồm 3 workflow n8n, mỗi workflow xử lý một giai đoạn độc lập.
+
+3.4.1 Workflow upload_exam (Xử lý đề thi + đáp án)
+
+Trigger: Webhook POST /upload-exam-api (do ExpressJS gọi sau khi lưu file)
+
+  [Webhook] → [Validate: exam_id, teacher_id, PDF files]
+       ↓
+  [Parallel]─┬─[Upload question PDF → Google Drive]
+             └─[Upload answer PDF   → Google Drive]
+       ↓
+  [Mistral OCR] ← answer PDF → Markdown text
+       ↓
+  [GPT-4.1-mini] ← Markdown → parse thành answer_extract JSON
+       {
+         questions: [ { id, content, correct_answer, score, rubric } ]
+       }
+       ↓
+  [PostgreSQL] UPDATE exams SET answer_extract=..., status='ready'
+       ↓
+  [system_logs] INSERT log
+
+< ẢNH: Screenshot workflow upload_exam trên giao diện n8n >
+
+3.4.2 Workflow upload_answer (Xử lý bài làm sinh viên)
+
+Trigger: Webhook POST /upload-answer-api
+
+  [Webhook] → [Validate: submission_id, student metadata, PDF]
+       ↓
+  [Parallel]─┬─[Upload submission PDF → Google Drive]
+             └─[Mistral OCR] ← submission PDF → Markdown
+       ↓
+  [GPT-4.1-mini] ← Markdown → extract student answers JSON
+       {
+         answers: [ { question_id, student_answer, confidence } ]
+       }
+       ↓
+  [PostgreSQL] UPSERT submissions SET submission_extract=...,
+               status='extracted'
+       ↓
+  [system_logs] INSERT log
+
+< ẢNH: Screenshot workflow upload_answer trên giao diện n8n >
+
+3.4.3 Workflow auto_grade_submissions (Chấm điểm tự động)
+
+Trigger: Schedule — cron 0 * * * * (mỗi 1 giờ)
+
+  [Schedule Trigger]
+       ↓
+  [PostgreSQL] Query submissions WHERE status='extracted'
+               AND exam.status='active'
+               AND no grading OR regrade_requested
+       ↓
+  [Loop mỗi submission]:
+    ├─ Lấy answer_extract (từ exams)
+    ├─ Lấy submission_extract (từ submissions)
+    ├─ [GPT-4.1-mini] Prompt:
+    │    "Chấm bài theo rubric sau: {answer_extract}
+    │     Bài làm sinh viên: {submission_extract}
+    │     Trả về: { scores[], total, feedback, details }"
+    ├─ [Calculate] Tính tổng điểm, chuẩn hóa JSON
+    ├─ [PostgreSQL] INSERT grading_results
+    │               (attempt_no tăng nếu regrade)
+    └─ [system_logs] INSERT log
+
+< ẢNH: Screenshot workflow auto_grade_submissions trên giao diện n8n >
+
+3.4.4 Design Patterns trong Workflow
+
+  | Pattern               | Áp dụng                                      |
+  |-----------------------|----------------------------------------------|
+  | Fire-and-Forget       | API trả response ngay, AI xử lý background   |
+  | Idempotent Upsert     | UPSERT tránh duplicate khi webhook retry      |
+  | Attempt Tracking      | attempt_no tăng dần hỗ trợ regrade           |
+  | JSONB Storage         | Lưu AI output linh hoạt, không migrate schema |
+  | Parallel Processing   | Upload Drive + OCR chạy song song            |
+  | Audit Logging         | Mọi bước đều ghi system_logs                 |
+
+
+3.5 THIẾT KẾ GIAO DIỆN NGƯỜI DÙNG
+------------------------------------
+Giao diện xây dựng bằng Vanilla JS + Tailwind CSS, tổ chức thành hai cổng
+truy cập độc lập.
+
+Các module dùng chung:
+  - AppState   : quản lý session, role, user info
+  - AppApi     : xử lý HTTP request, đính kèm auth token tự động
+  - AppUI      : render component, hiển thị trạng thái loading/error
+  - AppLayout  : navigation, sidebar, modal
+
+Cổng Giáo viên (yêu cầu role = teacher):
+  - Dashboard   : thống kê tổng quan (số bài thi, bài nộp, chờ duyệt)
+  - Quản lý đề thi : tạo/sửa/xóa, upload PDF
+  - Bài nộp    : danh sách, trạng thái OCR
+  - Kết quả    : xem điểm AI, approve/override/regrade
+  - Lịch học   : tạo và quản lý lịch thi
+
+Cổng Sinh viên (yêu cầu role = student):
+  - Danh sách bài thi đang active
+  - Upload bài làm + theo dõi trạng thái
+  - Xem kết quả sau khi published
+  - Xem lịch học
+
+< ẢNH: Wireframe / mockup màn hình chính cổng giáo viên
+  (dashboard + danh sách kết quả chấm) >
+
+< ẢNH: Wireframe / mockup màn hình sinh viên
+  (upload bài làm + xem kết quả) >
+
+
+3.6 BIỂU ĐỒ TUẦN TỰ — LUỒNG CHẤM ĐIỂM ĐẦY ĐỦ
+-------------------------------------------------
+< ẢNH: Sequence Diagram đầy đủ — các đối tượng:
+  Frontend | ExpressJS | PostgreSQL | n8n | Mistral OCR | GPT-4.1-mini
+  Mô tả toàn bộ luồng từ upload đáp án → upload bài → auto grade →
+  approve → sinh viên xem kết quả >

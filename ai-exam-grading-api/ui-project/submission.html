@@ -14,14 +14,19 @@
 </head>
 <body data-page="submission" class="bg-slate-50 text-slate-900">
   <div class="min-h-screen flex">
-    <aside class="w-64 bg-white border-r border-slate-200 p-4">
-      <div class="mb-4">
-        <div class="text-xs font-semibold text-slate-500">Cổng sinh viên</div>
-        <div class="text-lg font-extrabold"><a class="hover:underline" href="index.html">AI Exam Grading</a></div>
-        <div class="text-xs text-slate-600 mt-1">Cổng nộp bài làm và theo dõi xử lý.</div>
+    <aside class="w-64 bg-white border-r border-slate-200 p-4 flex flex-col">
+      <div class="mb-6">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Cổng sinh viên</div>
+        <div class="text-lg font-extrabold mt-1">AI Exam Grading</div>
+        <div class="text-xs text-slate-500 mt-1">Nộp bài làm trực tuyến</div>
       </div>
-      <div id="current-user-label" class="text-xs text-slate-600 mb-3">Cổng nộp bài sinh viên</div>
-      <nav class="space-y-1" id="nav"></nav>
+      <nav class="space-y-1 flex-1">
+        <a href="student.html" class="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">Tra cứu kết quả</a>
+        <a href="submission.html" class="block px-3 py-2 rounded-lg text-sm font-semibold bg-slate-900 text-white">Nộp bài làm</a>
+      </nav>
+      <div class="mt-6 pt-4 border-t border-slate-200">
+        <a href="login.html" class="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:bg-slate-100">← Cổng giáo viên</a>
+      </div>
     </aside>
 
     <main class="flex-1 p-6">
@@ -140,7 +145,6 @@
   <script src="js/app-state.js"></script>
   <script src="js/api.js"></script>
   <script src="js/common.js"></script>
-  <script src="js/layout.js"></script>
   <script src="js/submission.js"></script>
 </body>
 </html>

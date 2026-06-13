@@ -13,7 +13,8 @@
         { id: "admin-subjects", href: "admin-subjects.html", label: "Môn học" },
         { id: "admin-periods", href: "admin-periods.html", label: "Đợt thi" }
       ]
-    }
+    },
+    { id: "student-portal-link", href: "student.html", label: "↗ Cổng sinh viên" }
   ];
 
   const PUBLIC_NAV_ITEMS = [

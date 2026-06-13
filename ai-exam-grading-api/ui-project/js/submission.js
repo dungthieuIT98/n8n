@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  window.AppLayout.init();
+  // student portal — no layout.js
+  window.AppState.ensurePageAccess("submission");
 
   const form = document.getElementById("submission-form");
   const message = document.getElementById("upload-message");

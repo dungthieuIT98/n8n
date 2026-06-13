@@ -4,11 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("login-form");
   const message = document.getElementById("login-message");
 
-  document.getElementById("demo-login-btn").addEventListener("click", () => {
-    form.elements.identity.value = "teacher01@school.edu.vn";
-    form.elements.password.value = "Demo123";
-  });
-
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const submitButton = form.querySelector('button[type="submit"]');

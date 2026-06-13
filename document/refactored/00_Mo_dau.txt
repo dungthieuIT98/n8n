@@ -1,0 +1,103 @@
+PHẦN MỞ ĐẦU
+================================================================
+[ Ước tính: ~2 trang ]
+[ Không cần ảnh ]
+================================================================
+
+1. ĐẶT VẤN ĐỀ
+--------------
+Trong bối cảnh chuyển đổi số đang diễn ra mạnh mẽ, trí tuệ nhân tạo (AI)
+ngày càng được ứng dụng sâu rộng trong giáo dục — từ hỗ trợ giảng dạy đến
+tự động hóa quản lý và đánh giá kết quả học tập.
+
+Tuy nhiên, thực tế cho thấy nhiều quy trình trong giảng dạy và học tập vẫn
+còn thực hiện thủ công. Giáo viên mất nhiều thời gian chấm bài kiểm tra, dễ
+xảy ra sai sót và khó đảm bảo tính nhất quán khi số lượng bài lớn. Sinh viên
+gặp khó khăn khi tiếp cận tài liệu dạng ảnh hoặc văn bản scan, đồng thời
+thiếu công cụ quản lý lịch học hiệu quả dẫn đến tình trạng bỏ sót lịch thi
+hay học tập thiếu kế hoạch.
+
+Sự phát triển của các mô hình ngôn ngữ lớn (LLM) và công nghệ nhận dạng
+ký tự quang học (OCR) đã mở ra hướng tiếp cận mới: xây dựng AI Agent có khả
+năng tự động xử lý bài làm, đọc và phân tích văn bản, đồng thời hỗ trợ quản
+lý thời gian học tập. Công cụ n8n Workflow Automation cho phép hiện thực hóa
+các luồng xử lý này một cách linh hoạt mà không đòi hỏi hạ tầng phức tạp.
+
+Từ những vấn đề thực tiễn trên, đề tài được hình thành với tên:
+
+    "Ứng dụng AI Agent trong hỗ trợ học tập:
+     Tự động chấm bài kiểm tra, đọc văn bản và quản lý lịch học"
+
+
+2. MỤC TIÊU ĐỀ TÀI
+--------------------
+Đề tài hướng đến xây dựng một hệ thống hỗ trợ học tập tích hợp AI Agent
+với ba chức năng cốt lõi:
+
+  (1) Tự động chấm bài kiểm tra — upload đề thi, đáp án và bài làm của sinh
+      viên; AI trả về kết quả chấm điểm có giải thích.
+
+  (2) Đọc và xử lý văn bản — nhận dạng văn bản từ file ảnh hoặc PDF thông
+      qua OCR, sau đó tóm tắt hoặc trả lời câu hỏi liên quan bằng LLM.
+
+  (3) Quản lý lịch học — lưu trữ, theo dõi và nhắc nhở lịch học, lịch thi
+      cho sinh viên.
+
+Hệ thống được xây dựng trên nền tảng Node.js/ExpressJS, n8n Workflow
+Automation và PostgreSQL, tích hợp các API AI bên ngoài (Mistral OCR,
+GPT-4).
+
+
+3. ĐỐI TƯỢNG VÀ PHẠM VI NGHIÊN CỨU
+-------------------------------------
+Đối tượng nghiên cứu:
+  - Công nghệ AI Agent, LLM và OCR ứng dụng trong giáo dục
+  - Kiến trúc hệ thống backend và workflow automation
+  - Quy trình tự động hóa chấm điểm và xử lý tài liệu học tập
+
+Phạm vi nghiên cứu:
+  - Xây dựng và triển khai hệ thống ở mức prototype/thử nghiệm
+  - Người dùng mục tiêu: giáo viên và sinh viên tại các cơ sở đào tạo
+  - Chưa mở rộng đến tích hợp LMS (Learning Management System) lớn
+    hoặc triển khai quy mô trường học
+
+
+4. PHƯƠNG PHÁP NGHIÊN CỨU
+---------------------------
+Đề tài kết hợp ba phương pháp:
+
+  a) Nghiên cứu lý thuyết: Tìm hiểu tài liệu về AI Agent, LLM, OCR,
+     kiến trúc backend và các hệ thống hỗ trợ học tập hiện có; từ đó
+     xác định hướng tiếp cận phù hợp cho đề tài.
+
+  b) Phân tích và thiết kế hệ thống: Đặc tả yêu cầu chức năng, thiết kế
+     kiến trúc tổng thể, mô hình dữ liệu và luồng xử lý của AI workflow.
+
+  c) Thực nghiệm và đánh giá: Cài đặt hệ thống, chạy kiểm thử theo bộ
+     test case, đo độ chính xác OCR và AI chấm điểm, thu thập phản hồi
+     người dùng.
+
+
+5. BỐ CỤC BÁO CÁO
+-------------------
+Báo cáo gồm 5 chương:
+
+  Chương 1 – Cơ sở lý thuyết
+    Trình bày các khái niệm và công nghệ nền tảng: AI Agent, LLM, OCR,
+    n8n, Node.js/ExpressJS, PostgreSQL và tổng quan tình hình nghiên cứu.
+
+  Chương 2 – Phân tích yêu cầu hệ thống
+    Mô tả bài toán, xác định yêu cầu chức năng và phi chức năng, xây dựng
+    biểu đồ Use Case và đặc tả các luồng xử lý chính.
+
+  Chương 3 – Thiết kế hệ thống
+    Kiến trúc tổng thể, thiết kế backend, cơ sở dữ liệu, AI workflow bằng
+    n8n và giao diện người dùng.
+
+  Chương 4 – Xây dựng và triển khai hệ thống
+    Môi trường phát triển, chi tiết cài đặt từng module, tích hợp OCR và
+    LLM, giao diện thực tế.
+
+  Chương 5 – Kiểm thử và đánh giá
+    Kết quả kiểm thử chức năng, đánh giá độ chính xác AI, hiệu năng hệ
+    thống và trải nghiệm người dùng.

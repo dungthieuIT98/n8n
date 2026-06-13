@@ -1,0 +1,175 @@
+CHƯƠNG 2 – PHÂN TÍCH YÊU CẦU HỆ THỐNG
+================================================================
+[ Ước tính: ~6 trang ]
+================================================================
+
+2.1 MÔ TẢ BÀI TOÁN
+--------------------
+Quy trình chấm bài kiểm tra truyền thống tồn tại nhiều hạn chế: tốn thời
+gian, khó đảm bảo tính đồng nhất khi số lượng bài lớn và toàn bộ quy trình
+phân tán — giáo viên phải thu bài, chấm thủ công, nhập điểm và thông báo
+riêng lẻ. Các hệ thống hiện có chủ yếu hỗ trợ trắc nghiệm, chưa xử lý được
+bài tự luận dạng PDF hay ảnh chụp.
+
+Hệ thống AI Exam Grading Platform được xây dựng để giải quyết bài toán này:
+tự động hóa toàn bộ pipeline từ upload đề thi — nhận bài — OCR — chấm điểm
+bằng LLM — công bố kết quả, đồng thời tích hợp quản lý lịch học trong cùng
+một nền tảng.
+
+
+2.2 YÊU CẦU CHỨC NĂNG
+-----------------------
+Hệ thống phục vụ ba nhóm actor với các chức năng tương ứng:
+
+2.2.1 Giáo viên
+
+  | STT | Chức năng              | Mô tả                                    |
+  |-----|------------------------|------------------------------------------|
+  | 1   | Đăng nhập              | Xác thực tài khoản, phân quyền           |
+  | 2   | Tạo bài kiểm tra       | Tạo exam, gắn môn học / lớp, upload đề  |
+  | 3   | Upload đáp án          | Upload rubric PDF, AI tự trích xuất      |
+  | 4   | Xem bài nộp            | Danh sách bài sinh viên đã nộp           |
+  | 5   | Xem kết quả chấm       | Điểm, nội dung OCR, nhận xét AI         |
+  | 6   | Phê duyệt / chấm lại   | Override điểm, yêu cầu regrade          |
+  | 7   | Quản lý lịch học       | Tạo/sửa lịch học và lịch kiểm tra       |
+
+2.2.2 Sinh viên
+
+  | STT | Chức năng              | Mô tả                                    |
+  |-----|------------------------|------------------------------------------|
+  | 1   | Đăng nhập              | Xác thực tài khoản                       |
+  | 2   | Upload bài làm         | Nộp file PDF bài thi                     |
+  | 3   | Theo dõi trạng thái    | Pending / Processing / Graded / Published|
+  | 4   | Xem kết quả            | Điểm số, nhận xét AI sau khi công bố    |
+  | 5   | Xem lịch học           | Tra cứu lịch học, lịch thi               |
+
+2.2.3 AI Agent (tác nhân tự động)
+
+  | STT | Chức năng              | Mô tả                                    |
+  |-----|------------------------|------------------------------------------|
+  | 1   | OCR đề thi / đáp án    | Trích xuất văn bản từ PDF giáo viên      |
+  | 2   | OCR bài làm sinh viên  | Nhận dạng nội dung bài nộp              |
+  | 3   | Chấm điểm tự động      | So sánh với rubric, tính điểm, sinh nhận xét |
+  | 4   | Cập nhật kết quả       | Ghi grading_results vào PostgreSQL      |
+
+
+2.3 YÊU CẦU PHI CHỨC NĂNG
+---------------------------
+  - Hiệu năng: xử lý OCR + chấm điểm 1 bài trong vòng 30 giây
+  - Bảo mật: xác thực JWT, phân quyền theo role (teacher / student)
+  - Độ tin cậy: kết quả AI luôn kèm log; hỗ trợ regrade khi cần
+  - Khả năng mở rộng: thay thế mô hình AI mà không ảnh hưởng backend
+  - Định dạng file: hỗ trợ PDF và ảnh JPG/PNG
+
+
+2.4 BIỂU ĐỒ USE CASE TỔNG QUÁT
+---------------------------------
+< ẢNH: Biểu đồ Use Case tổng quát — 3 actor: Giáo viên, Sinh viên,
+  AI Agent và các use case kết nối tương ứng (UML Use Case Diagram) >
+
+Mối quan hệ phụ thuộc chính:
+  - "AI chấm điểm tự động" <<include>> "OCR bài làm" và "OCR đáp án"
+  - "Xem kết quả" <<extend>> "Phê duyệt kết quả" (chỉ giáo viên)
+  - "Upload bài làm" <<include>> "AI chấm điểm tự động" (tự động kích hoạt)
+
+
+2.5 ĐẶC TẢ USE CASE CHÍNH
+---------------------------
+
+UC-01: Upload đáp án
+  Tác nhân   : Giáo viên
+  Tiền điều kiện: Bài kiểm tra đã được tạo
+  Luồng chính:
+    1. Giáo viên chọn bài kiểm tra → Upload file đáp án PDF
+    2. ExpressJS lưu file → trigger workflow n8n upload_answer
+    3. n8n chạy Mistral OCR trích xuất nội dung
+    4. GPT phân tích, tạo JSON rubric
+    5. Lưu rubric vào bảng answer_extract
+  Kết quả: Đáp án sẵn sàng cho quá trình chấm điểm
+
+UC-02: Upload bài làm sinh viên
+  Tác nhân   : Sinh viên
+  Tiền điều kiện: Bài kiểm tra đang active
+  Luồng chính:
+    1. Sinh viên chọn bài kiểm tra → Upload file PDF bài làm
+    2. ExpressJS kiểm tra file → lưu vào submissions/
+    3. Tạo record bảng submissions (status = pending)
+    4. Trigger workflow n8n upload_exam
+    5. Mistral OCR xử lý → lưu vào submission_extract
+  Kết quả: Bài làm vào hàng đợi chấm điểm
+
+UC-03: AI chấm điểm tự động
+  Tác nhân   : AI Agent (n8n schedule)
+  Tiền điều kiện: Tồn tại answer_extract và submission_extract
+  Luồng chính:
+    1. Workflow kích hoạt theo lịch (mỗi 1 giờ)
+    2. Query danh sách submissions chưa chấm
+    3. Với mỗi bài: lấy answer_extract + submission_extract
+    4. Gửi prompt + dữ liệu lên GPT-4.1-mini
+    5. GPT trả về điểm + nhận xét theo rubric
+    6. Lưu kết quả vào grading_results
+    7. Ghi system_log
+  Kết quả: Bài được chấm tự động, giáo viên nhận thông báo
+
+UC-04: Xem và phê duyệt kết quả
+  Tác nhân   : Giáo viên
+  Tiền điều kiện: Bài đã qua AI chấm
+  Luồng chính:
+    1. Giáo viên vào danh sách kết quả
+    2. Xem điểm, nội dung OCR, nhận xét AI
+    3a. Approve → status = published (sinh viên xem được)
+    3b. Override → sửa điểm thủ công → published
+    3c. Regrade → trigger lại workflow AI
+  Kết quả: Kết quả được công bố cho sinh viên
+
+UC-05: Xem kết quả (sinh viên)
+  Tác nhân   : Sinh viên
+  Tiền điều kiện: Kết quả đã published
+  Luồng chính:
+    1. Sinh viên truy cập trang kết quả
+    2. Hệ thống truy vấn LATERAL JOIN grading_results
+    3. Hiển thị: điểm số, trạng thái, nhận xét AI
+  Kết quả: Sinh viên xem được điểm và feedback
+
+
+2.6 BIỂU ĐỒ HOẠT ĐỘNG TỔNG THỂ
+---------------------------------
+Luồng hoạt động tổng thể hệ thống:
+
+  [Giáo viên] Tạo bài kiểm tra + Upload đáp án
+       ↓
+  [n8n: upload_answer] OCR đáp án → Trích xuất rubric → answer_extract
+       ↓
+  [Sinh viên] Upload bài làm PDF
+       ↓
+  [n8n: upload_exam] OCR bài làm → submission_extract
+       ↓
+  [n8n: auto_grade | Schedule 1h] Lấy pending submissions
+       ↓
+  [GPT-4.1-mini] Chấm điểm theo rubric → grading_results
+       ↓
+  [Giáo viên] Review → Approve / Override / Regrade
+       ↓
+  [Sinh viên] Xem điểm đã published
+
+< ẢNH: Activity Diagram tổng thể hệ thống — swimlane 3 làn:
+  Giáo viên | Hệ thống (n8n + Backend) | Sinh viên >
+
+
+2.7 BIỂU ĐỒ TUẦN TỰ — LUỒNG CHẤM ĐIỂM TỰ ĐỘNG
+-------------------------------------------------
+< ẢNH: Sequence Diagram luồng auto_grade: n8n Schedule Trigger →
+  Query PostgreSQL → Lấy answer_extract + submission_extract →
+  Gọi GPT API → INSERT grading_results → Ghi system_log →
+  Giáo viên approve → Sinh viên xem kết quả >
+
+Các bước chính trong sequence:
+  1. n8n schedule trigger (mỗi 1 giờ)
+  2. Query submissions WHERE status = 'pending'
+  3. Với mỗi submission: fetch answer_extract + submission_extract
+  4. Gửi prompt đến GPT-4.1-mini (kèm rubric + nội dung bài)
+  5. Nhận response: { score, feedback, details }
+  6. INSERT vào grading_results, cập nhật submission status
+  7. Ghi log vào system_logs
+  8. Giáo viên approve → status = 'published'
+  9. Sinh viên query LATERAL JOIN → hiển thị kết quả

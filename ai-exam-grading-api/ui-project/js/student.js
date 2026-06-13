@@ -1,5 +1,35 @@
 document.addEventListener("DOMContentLoaded", () => {
-  window.AppLayout.init();
+  window.AppState.ensurePageAccess("student");
+
+  function openModal(id) {
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.classList.remove("hidden");
+    m.classList.add("flex");
+    document.body.style.overflow = "hidden";
+  }
+  function closeModal(id) {
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.classList.add("hidden");
+    m.classList.remove("flex");
+    document.body.style.overflow = "";
+  }
+
+  document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+    btn.addEventListener("click", () => closeModal(btn.dataset.closeModal));
+  });
+  document.querySelectorAll("[data-modal-overlay]").forEach((overlay) => {
+    overlay.addEventListener("click", () => {
+      const modal = overlay.closest("[data-modal]");
+      if (modal) closeModal(modal.id);
+    });
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      document.querySelectorAll("[data-modal]:not(.hidden)").forEach((m) => closeModal(m.id));
+    }
+  });
 
   const PAGE_SIZE = 10;
   let currentPage = 1;
@@ -13,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       document.getElementById("student-modal-title").textContent = "Chi tiết bài thi - Đang tải...";
       document.getElementById("student-detail-content").innerHTML = "<p>Đang tải dữ liệu...</p>";
-      window.AppLayout.openModal("student-detail-modal");
+      openModal("student-detail-modal");
 
       const result = await window.AppApi.detail("submissions", submissionId);
       const submission = result.data;
@@ -77,13 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPage();
   }
 
-  document.getElementById("student-fill-demo-btn").addEventListener("click", () => {
-    form.elements.student_code.value = "SV2026001";
-    form.elements.student_name.value = "Nguyen Minh An";
-    form.elements.class_code.value = "12A1";
-  });
-
-  form.addEventListener("submit", async (event) => {
+form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const studentCode = form.elements.student_code.value.trim().toLowerCase();
     const studentName = form.elements.student_name.value.trim().toLowerCase();
