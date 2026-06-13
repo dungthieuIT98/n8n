@@ -54,11 +54,11 @@ async function studentResultsHandler(request, response, next) {
         SELECT id, total_score, max_score, ai_confidence, grading_detail, general_feedback,
                graded_at, review_status, published_at, reviewed_by, reviewed_at, status
         FROM grading_results
-        WHERE submission_id = s.id
+        WHERE submission_id = s.id AND status = 'published'
         ORDER BY attempt_no DESC
         LIMIT 1
       ) gr ON true
-      WHERE gr.status = 'published'
+      WHERE gr.id IS NOT NULL
         AND ($1 = '' OR LOWER(s.student_code) = $1)
         AND ($2 = '' OR LOWER(s.student_name) LIKE '%' || $2 || '%')
         AND ($3 = '' OR LOWER(s.class_code) = $3)
@@ -579,7 +579,87 @@ router.get('/by-student', requireAuth, async (request, response, next) => {
 });
 
 
+async function studentResultDetailHandler(request, response, next) {
+  try {
+    const submissionId = parseId(request.params.id);
+    if (!submissionId) {
+      response.status(400).json({ ok: false, message: 'Invalid submission id' });
+      return;
+    }
+
+    const result = await query(`
+      SELECT
+        s.id,
+        s.submission_file_path,
+        e.exam_code,
+        e.title AS exam_title,
+        e.subject_name,
+        e.exam_type,
+        s.student_code,
+        s.student_name,
+        s.class_code,
+        s.subject_code,
+        gr.total_score,
+        gr.max_score,
+        gr.ai_confidence,
+        gr.grading_detail,
+        gr.general_feedback,
+        gr.review_notes AS notes,
+        gr.status AS grading_status,
+        gr.graded_at,
+        gr.review_status
+      FROM submissions s
+      LEFT JOIN exams e ON e.id = s.exam_id
+      LEFT JOIN LATERAL (
+        SELECT total_score, max_score, ai_confidence, grading_detail, general_feedback,
+               review_notes, status, graded_at, review_status
+        FROM grading_results
+        WHERE submission_id = s.id AND status = 'published'
+        ORDER BY attempt_no DESC
+        LIMIT 1
+      ) gr ON true
+      WHERE s.id = $1 AND gr.status = 'published'
+    `, [submissionId]);
+
+    if (result.rowCount === 0) {
+      response.status(404).json({ ok: false, message: 'Không tìm thấy kết quả đã công bố.' });
+      return;
+    }
+
+    const row = result.rows[0];
+    const gradingDetail = row.grading_detail || {};
+    const questions = Array.isArray(gradingDetail.graded_questions) ? gradingDetail.graded_questions : [];
+
+    response.json({
+      ok: true,
+      data: {
+        id: row.id,
+        exam_code: row.exam_code,
+        exam_title: row.exam_title,
+        subject_name: row.subject_name,
+        exam_type: row.exam_type,
+        student_code: row.student_code,
+        student_name: row.student_name,
+        class_code: row.class_code,
+        submission_file_path: row.submission_file_path,
+        total_score: row.total_score,
+        max_score: row.max_score,
+        ai_confidence: row.ai_confidence,
+        general_feedback: row.general_feedback,
+        notes: row.notes,
+        grading_status: row.grading_status,
+        review_status: row.review_status,
+        graded_at: row.graded_at,
+        questions
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   router,
-  studentResultsHandler
+  studentResultsHandler,
+  studentResultDetailHandler
 };

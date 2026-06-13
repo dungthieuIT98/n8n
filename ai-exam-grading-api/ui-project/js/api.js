@@ -130,6 +130,10 @@ function getSubmissionResult(submissionId) {
     return request(`/api/grading/${submissionId}/regrade`, { method: 'POST' });
   }
 
+  function studentResultDetail(id) {
+    return request(`/api/student-results/${id}`);
+  }
+
   window.AppApi = {
     list,
     detail,
@@ -143,6 +147,7 @@ function getSubmissionResult(submissionId) {
     approveSubmission,
     retryLog,
     studentResults,
+    studentResultDetail,
     publicExams,
     submitExamSubmission,
     getSubmissionResult,

@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("student-detail-content").innerHTML = "<p>Đang tải dữ liệu...</p>";
       openModal("student-detail-modal");
 
-      const result = await window.AppApi.detail("submissions", submissionId);
+      const result = await window.AppApi.studentResultDetail(submissionId);
       const submission = result.data;
 
       if (!submission) {
@@ -76,17 +76,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tableBody.innerHTML = pageRows.map((submission) => `
       <tr class="hover:bg-slate-50">
-        <td class="py-2 px-3 font-semibold">${submission.exam_title || "-"}</td>
+        <td class="py-2 px-3 font-semibold">${submission.student_name || "-"}</td>
+        <td class="py-2 px-3">${submission.student_code || "-"}</td>
+        <td class="py-2 px-3">${submission.exam_title || "-"}</td>
         <td class="py-2 px-3">${submission.subject_name || "-"}</td>
         <td class="py-2 px-3">${submission.exam_type || "-"}</td>
         <td class="py-2 px-3 font-bold">${submission.total_score != null ? `${submission.total_score}/${submission.max_score ?? "?"}` : "-"}</td>
+        <td class="py-2 px-3 text-xs text-slate-600 max-w-xs truncate" title="${submission.general_feedback || ""}">${submission.general_feedback || "-"}</td>
         <td class="py-2 px-3">${window.AppUI.renderStatus(submission.grading_status || "published")}</td>
         <td class="py-2 px-3">${formatDateTime(submission.graded_at)}</td>
         <td class="py-2 px-3">
           <button class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold" data-student-detail="${submission.id}">Xem chi tiết</button>
         </td>
       </tr>
-    `).join("") || '<tr><td colspan="7" class="py-3 px-3 text-slate-400">Không tìm thấy kết quả đã công bố.</td></tr>';
+    `).join("") || '<tr><td colspan="10" class="py-3 px-3 text-slate-400">Không tìm thấy kết quả đã công bố.</td></tr>';
 
     document.querySelectorAll("[data-student-detail]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -107,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPage();
   }
 
-form.addEventListener("submit", async (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const studentCode = form.elements.student_code.value.trim().toLowerCase();
     const studentName = form.elements.student_name.value.trim().toLowerCase();
@@ -121,7 +124,7 @@ form.addEventListener("submit", async (event) => {
       });
       renderResults(payload.data);
     } catch (error) {
-      tableBody.innerHTML = `<tr><td colspan="7">${error.message}</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="10">${error.message}</td></tr>`;
     }
   });
 });

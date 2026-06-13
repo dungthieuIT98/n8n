@@ -9,7 +9,7 @@ const upload = require('./upload');
 // Routes
 const authRoutes = require('./routes/auth');
 const examsRoutes = require('./routes/exams');
-const { router: submissionsRoutes, studentResultsHandler } = require('./routes/submissions');
+const { router: submissionsRoutes, studentResultsHandler, studentResultDetailHandler } = require('./routes/submissions');
 const logsRoutes = require('./routes/logs');
 const entitiesRoutes = require('./routes/entities');
 const gradingRoutes = require('./routes/grading');
@@ -76,6 +76,7 @@ async function startServer() {
   app.use('/api/logs', logsRoutes);
   app.use('/api/grading', gradingRoutes);
   app.get('/api/student-results', studentResultsHandler);
+  app.get('/api/student-results/:id', studentResultDetailHandler);
 
   // Dashboard stats - requires auth
   app.get('/api/stats', async (request, response, next) => {
